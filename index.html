@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="dark">
+  <meta name="description" content="Two independent short-form editing studies by Sorin: product montage and data-led motion. Watch the edits and inspect the credits.">
+  <title>Sorin — Short-form edit catalog</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <a class="skip-link" href="#work">Skip to edits</a>
+  <div class="site-shell" id="top">
+    <header class="site-header">
+      <a class="brand" href="#top" aria-label="Sorin, back to top"><span class="brand-mark" aria-hidden="true">S<span class="brand-slash">/</span></span><span class="brand-text">SORIN<br><small>VIDEO EDITING</small></span></a>
+      <nav class="site-nav" aria-label="Main navigation"><a href="#work">Clips</a><a href="credits.html">Credits</a><a href="#contact">Contact</a></nav>
+    </header>
+
+    <main>
+      <section class="intro" aria-labelledby="intro-title">
+        <div><p class="eyebrow">SHORT-FORM / 2026</p><h1 id="intro-title">Short-form.<br><em>Cut to the point.</em></h1></div>
+        <div class="intro-aside"><p>Independent studies in product montage and data-led motion.</p></div>
+      </section>
+
+      <section class="catalog-section section-line" id="work" aria-labelledby="work-title">
+        <div class="catalog-heading"><h2 id="work-title">The work</h2><span class="catalog-count">02 EDITS</span></div>
+        <div class="catalog-grid" id="project-list">
+          <div class="catalog-fallback"><p>Open the edits directly:</p><ul><li><a href="media/coffee-ritual-spec.mp4">Coffee ritual</a></li><li><a href="media/earth-systems-study.mp4">Four systems, one planet</a></li></ul><a href="credits.html">Sources and licenses</a></div>
+        </div>
+      </section>
+
+      <section class="contact-section section-line" id="contact" aria-labelledby="contact-title"><div><p class="eyebrow">02 / PAID TRIALS</p><h2 id="contact-title">Have footage<br>to cut?</h2></div><p>Send the source, target format and brief through the application thread where you received this catalog.</p></section>
+    </main>
+
+    <footer class="site-footer"><span>SORIN / VIDEO EDITING</span><a href="credits.html">Sources &amp; licenses</a><a href="#top">Back to top ↑</a><span>2026</span></footer>
+  </div>
+
+  <dialog class="viewer" id="viewer" aria-labelledby="viewer-title">
+    <div class="viewer-inner">
+      <div class="viewer-top"><div><p class="eyebrow" id="viewer-meta"></p><h2 id="viewer-title"></h2></div><button class="viewer-close" id="viewer-close" type="button" aria-label="Close video">×</button></div>
+      <video class="viewer-video" id="viewer-video" controls playsinline preload="none">Your browser cannot play this video.</video>
+      <div class="viewer-bottom"><a id="viewer-file" href="#" target="_blank" rel="noopener noreferrer">Open MP4 ↗</a><a href="credits.html">Sources &amp; licenses ↗</a></div>
+    </div>
+  </dialog>
+
+  <script src="projects.js" defer></script>
+  <script src="app.js" defer></script>
+</body>
+</html>
