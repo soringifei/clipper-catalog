@@ -79,7 +79,6 @@
     permalink.href = `#${project.slug}`;
     permalink.setAttribute('aria-label', `Link to ${project.title}`);
     info.append(permalink);
-    info.append(element('div', 'card-source', project.credit));
     article.append(meta, frame, info);
     return article;
   });
