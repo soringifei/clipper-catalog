@@ -60,6 +60,12 @@ def hsv_hist(frame_bgr: np.ndarray) -> np.ndarray:
     return cv2.normalize(h, h).flatten()
 
 
+def _secs(tc: Any) -> float:
+    """FrameTimecode -> seconds (``seconds`` property in 0.7, method in 0.6)."""
+    v = getattr(tc, "seconds", None)
+    return float(v) if v is not None and not callable(v) else float(tc.get_seconds())
+
+
 def _cut_times(video_path: str, sc: dict) -> tuple[list[tuple[float, float]], float, float]:
     """Return ([(start_s, end_s)...], fps, duration_s) using PySceneDetect."""
     from scenedetect import AdaptiveDetector, ContentDetector, SceneManager, open_video
@@ -77,8 +83,8 @@ def _cut_times(video_path: str, sc: dict) -> tuple[list[tuple[float, float]], fl
                                          min_content_val=float(sc["min_content_val"])))
     sm.detect_scenes(video=video)
     raw = sm.get_scene_list(start_in_scene=True)
-    duration = float(video.duration.get_seconds()) if video.duration is not None else 0.0
-    spans = [(s.get_seconds(), e.get_seconds()) for s, e in raw]
+    duration = _secs(video.duration) if video.duration is not None else 0.0
+    spans = [(_secs(s), _secs(e)) for s, e in raw]
     if not spans and duration > 0:
         spans = [(0.0, duration)]
     return spans, fps, duration
