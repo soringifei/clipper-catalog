@@ -214,6 +214,11 @@ def render_end_card(background_bgr: np.ndarray, caption: str, ident: str,
     y += ih + 34
     d.rectangle([(W - 160) // 2, y, (W + 160) // 2, y + 8], fill=rgb + (255,))
     y += 8 + 48
+    # A neutral caption ("#52 | MLB | BUCHAREST REBELS") repeats the ident line:
+    # show only the part after the ident (the play label), if any.
+    norm = lambda s: " ".join(s.upper().replace("•", "|").split())  # noqa: E731
+    if caption and norm(ident).endswith(norm(caption.split(" — ")[0])):
+        caption = caption.split(" — ", 1)[1] if " — " in caption else ""
     for line in wrap_text(caption, fc, W - 2 * pad)[:4] if caption else []:
         lw, lh = text_size(fc, line)
         d.text(((W - lw) // 2, y - fc.getbbox(line)[1]), line, font=fc, fill=WHITE + (255,))

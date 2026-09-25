@@ -307,6 +307,12 @@ def detect_jumps(seq: PoseSeq, body_px: Optional[float], min_flight_s: float = 0
     jumps = []
     idx = np.flatnonzero(np.diff(np.concatenate([[0], air.astype(int), [0]])))
     for s, e in zip(idx[::2], idx[1::2]):
+        # refine edges: the 3% threshold is only for detection; contact is ~1% stature
+        gap = ground - a
+        while s > 0 and gap[s - 1] > 0.01 * body_px:
+            s -= 1
+        while e < len(a) and gap[e] > 0.01 * body_px:
+            e += 1
         dur = (e - s) / fps
         if not (min_flight_s <= dur <= max_flight_s):
             continue

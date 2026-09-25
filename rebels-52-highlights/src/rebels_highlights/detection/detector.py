@@ -95,7 +95,8 @@ def annotate(frame_bgr: np.ndarray, dets: list[dict], field: Optional[np.ndarray
         d["referee_score"] = rs
         d["referee"] = rs >= 0.5
         side = False
-        if field is not None:
+        # feet cut off by the frame edge or a close-up: we cannot tell, keep the player
+        if field is not None and y2 < H - 3 and (y2 - y1) < 0.5 * H and field.mean() / 255.0 > 0.3:
             fx, fy = int(np.clip((x1 + x2) / 2, 0, W - 1)), int(np.clip(y2 - 1, 0, H - 1))
             # tolerate a margin: feet may be just past the painted hull
             m = max(3, int(0.02 * H))
