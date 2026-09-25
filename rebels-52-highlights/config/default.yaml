@@ -73,6 +73,20 @@ scoring:
     identity: 0.10
 
 render:
+  style: epic               # epic (cold open, speed ramps, impact FX, kinetic type) | clean (legacy)
+  epic:                     # tuning for the epic style (rendering/style.py: Style)
+    grade: 1.0              # cinematic grade strength (0 = off)
+    grain: 0.055
+    vignette: 0.38
+    sharpen: 0.35
+    fx: 1.0                 # impact FX strength (flash/shake/punch/RGB split)
+    ramp_speed: 0.30        # slow-mo floor of the live speed ramp
+    replay_ramp_speed: 0.25
+    coldopen_s: 0.9
+    intro_s: 1.1
+    end_s: 1.8
+    fx_zoom_allowance: 1.15 # FX/freeze push-ins may briefly exceed max_digital_zoom by this factor
+    text: true              # kinetic action words (READ. / CLOSE. / FINISH.)
   width: 1080
   height: 1920
   fps: 30

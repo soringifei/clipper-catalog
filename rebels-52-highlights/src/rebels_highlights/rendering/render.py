@@ -16,6 +16,11 @@ Frames are decoded with OpenCV, composed in numpy/PIL and piped as raw BGR to
 ffmpeg (libx264 yuv420p +faststart); game audio for each segment is cut from
 the source in the same ffmpeg call (time-stretched, low-passed and quieter
 under the replay) and normalised by :func:`audio.audio.audio_filter_graph`.
+
+That is the ``clean`` style (``render.style: clean``). The default ``epic``
+style (cold open, spotlight intro, speed ramps, impact FX, kinetic type,
+duotone end card, synthesized SFX) lives in :mod:`.epic` and shares the
+engine in :mod:`.style`; :func:`render_clip` dispatches on the style.
 """
 from __future__ import annotations
 
@@ -36,6 +41,7 @@ from ..core.media import ffmpeg_bin, probe
 from ..core.models import UNKNOWN, Candidate, EventResult, PlayerTrajectory, VideoInfo
 from . import overlays as ov
 from .crop import OUT_H, OUT_W, CropPath, compose_frame, compute_crop_path, letterbox_frame, max_zoom
+from .style import get_style
 
 PLAY_SHORT = {
     "tackle_for_loss": "tfl",
@@ -397,10 +403,47 @@ def _video_codec(cfg: dict) -> list[str]:
             "-r", str(fps), "-g", str(fps * 2), "-movflags", "+faststart"]
 
 
+def write_seed_frame(reader: "FrameReader", out_dir_p: Path, base: str, snap: Optional[float],
+                     s0: float) -> tuple[Path, float]:
+    """Landscape pre-snap seed frame (review page: exact manual #52 seeding)."""
+    import cv2
+    seed_t = max(0.0, (snap - 0.2) if snap is not None else s0)
+    seed_jpg = out_dir_p / f"{base}_seed.jpg"
+    cv2.imwrite(str(seed_jpg), reader.at(seed_t), [cv2.IMWRITE_JPEG_QUALITY, 90])
+    return seed_jpg, seed_t
+
+
+def write_music_version(out_mp4: Path, music_file: Optional[str], duration: float, cfg: dict,
+                        out_dir_p: Path, base: str) -> Optional[Path]:
+    """Optional licensed-music version next to the clean clip (video stream copied)."""
+    if not (music_file and Path(music_file).is_file()):
+        return None
+    music_out = out_dir_p / f"{base}_music.mp4"
+    graph = "[0:a]anull[game];[1:a]anull[music];" + audio_filter_graph(True, cfg)
+    mcmd = [ffmpeg_bin(), "-y", "-hide_banner", "-loglevel", "error", "-i", str(out_mp4),
+            "-stream_loop", "-1", "-i", str(music_file), "-filter_complex", graph,
+            "-map", "0:v", "-map", "[aout]", "-c:v", "copy"] + AUDIO_CODEC + \
+        ["-t", f"{duration:.3f}", "-movflags", "+faststart", str(music_out)]
+    subprocess.run(mcmd, check=True, capture_output=True)
+    return music_out
+
+
 # ============================================================ render_clip
 def render_clip(cand: Candidate, info: VideoInfo, trajectory: PlayerTrajectory,
                 event: EventResult, cfg: dict, out_dir: str,
                 music_file: Optional[str] = None) -> dict:
+    """Render one vertical clip in ``render.style`` (``epic`` default | ``clean``)."""
+    st = get_style(cfg)
+    if st.epic:
+        from .epic import render_epic
+        return render_epic(cand, info, trajectory, event, cfg, out_dir, music_file, st)
+    return _render_clean(cand, info, trajectory, event, cfg, out_dir, music_file)
+
+
+def _render_clean(cand: Candidate, info: VideoInfo, trajectory: PlayerTrajectory,
+                  event: EventResult, cfg: dict, out_dir: str,
+                  music_file: Optional[str] = None) -> dict:
+    """Legacy look: ident bar + arrow/halo, full-speed play, dipped slow replay, end card."""
     rc = cfg.get("render", {})
     accent = rc.get("accent_color", ov.DEFAULT_ACCENT)
     accent_rgb = ov.hex_to_rgb(accent)
@@ -548,11 +591,7 @@ def render_clip(cand: Candidate, info: VideoInfo, trajectory: PlayerTrajectory,
         ov.composite(thumb, layer)
     import cv2
     cv2.imwrite(str(out_jpg), thumb, [cv2.IMWRITE_JPEG_QUALITY, 90])
-    # ---- landscape pre-snap seed frame (review page: exact manual #52 seeding)
-    seed_t = max(0.0, (snap - 0.2) if snap is not None else s0)
-    seed_img = reader.at(seed_t)
-    seed_jpg = out_dir_p / f"{base}_seed.jpg"
-    cv2.imwrite(str(seed_jpg), seed_img, [cv2.IMWRITE_JPEG_QUALITY, 90])
+    seed_jpg, seed_t = write_seed_frame(reader, out_dir_p, base, snap, s0)
     reader.close()
 
     # ---- crop sidecar for QA: one entry per output frame of the real-time section
@@ -571,17 +610,9 @@ def render_clip(cand: Candidate, info: VideoInfo, trajectory: PlayerTrajectory,
 
     duration = plan["duration"]
     # ---- optional licensed music version (base file stays clean)
-    music_out = None
-    if music_file and Path(music_file).is_file():
-        music_out = out_dir_p / f"{base}_music.mp4"
-        graph = "[0:a]anull[game];[1:a]anull[music];" + audio_filter_graph(True, cfg)
-        mcmd = [ffmpeg_bin(), "-y", "-hide_banner", "-loglevel", "error", "-i", str(out_mp4),
-                "-stream_loop", "-1", "-i", str(music_file), "-filter_complex", graph,
-                "-map", "0:v", "-map", "[aout]", "-c:v", "copy"] + AUDIO_CODEC + \
-            ["-t", f"{duration:.3f}", "-movflags", "+faststart", str(music_out)]
-        subprocess.run(mcmd, check=True, capture_output=True)
+    music_out = write_music_version(out_mp4, music_file, duration, cfg, out_dir_p, base)
 
-    timeline = {"basename": base, "fps": fps, "duration": duration,
+    timeline = {"basename": base, "style": "clean", "fps": fps, "duration": duration,
                 "source": {k: plan[k] for k in ("s0", "s1", "snap", "impact", "r0", "r1")},
                 "impact_out": round(plan["segments"][1]["out_start"] + (impact - s0), 4),
                 "segments": [{"kind": s["kind"], "start": s["out_start"], "end": s["out_end"],
@@ -597,7 +628,7 @@ def render_clip(cand: Candidate, info: VideoInfo, trajectory: PlayerTrajectory,
             "output_duration_s": round(duration, 3),
             "music_file": str(music_out) if music_out else None,
             "crop_mode": path.mode, "crop_quality": round(path.quality, 3),
-            "review_reasons": list(path.review_reasons),
+            "review_reasons": list(path.review_reasons), "style": "clean",
             "timeline_file": str(out_dir_p / f"{base}.timeline.json"),
             "crop_file": str(crop_json), "seed_frame": str(seed_jpg),
             "seed_frame_size": [int(src_w), int(src_h)], "seed_frame_t": round(seed_t, 3)}
