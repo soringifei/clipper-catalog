@@ -13,7 +13,8 @@ def _parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(prog="rebels_highlights",
                                 description="#52 Bucharest Rebels highlight pipeline")
     sub = p.add_subparsers(dest="cmd", required=True)
-    for name in ("env", "ingest", "analyze", "review", "render", "mix", "run-all", "status"):
+    for name in ("env", "ingest", "analyze", "review", "render", "mix", "run-all", "status",
+                 "export"):
         s = sub.add_parser(name)
         s.add_argument("--config", default="config/games.yaml", help="games yaml")
         s.add_argument("--player", type=int, default=None, help="jersey number (default 52)")
@@ -28,6 +29,8 @@ def _parser() -> argparse.ArgumentParser:
         s.add_argument("--approved-only", action="store_true")
         s.add_argument("--duration", type=int, action="append",
                        help="mix duration in seconds (repeatable)")
+        s.add_argument("--export-dir", default=None,
+                       help="copy final videos here (default ~/Desktop/Rebels52_highlights)")
     return p
 
 
@@ -53,6 +56,10 @@ def main(argv: list[str] | None = None) -> int:
     pipe = Pipeline(cfg, resume=args.resume, debug=args.debug, dry_run=args.dry_run)
     games = select_games(cfg, args.game)
 
+    if args.cmd == "export":
+        dest = export_outputs(pipe.store, args.export_dir)
+        print("exported to", dest)
+        return 0
     if args.cmd == "status":
         for g in games:
             print(g.game_id, json.dumps(pipe.store.status(g.game_id)))
@@ -77,7 +84,37 @@ def main(argv: list[str] | None = None) -> int:
     if args.cmd == "run-all":
         from .manifests.manifest import ranked_table
         print(ranked_table(pipe.all_candidates(games)))
+        if args.export_dir:
+            print("exported to", export_outputs(pipe.store, args.export_dir))
     return 0
+
+
+def export_outputs(store, dest: str | None = None) -> str:
+    """Copy finished videos, thumbnails and manifests to a local folder.
+
+    Default is the Desktop so results land where the user sees them; nothing
+    is uploaded anywhere.
+    """
+    import shutil
+    from pathlib import Path
+    out = Path(dest or Path.home() / "Desktop" / "Rebels52_highlights").expanduser()
+    for sub in ("approved", "single_plays", "candidates", "mixes", "manifests", "gym"):
+        src = store.outputs / sub
+        if not src.exists():
+            continue
+        for f in src.rglob("*"):
+            if f.is_file() and f.suffix.lower() in (".mp4", ".jpg", ".json", ".csv"):
+                if f.name.endswith((".crop.json", ".timeline.json")) or f.stem.endswith("_seed"):
+                    continue
+                d = out / sub / f.relative_to(src)
+                d.parent.mkdir(parents=True, exist_ok=True)
+                shutil.copy2(f, d)
+    review = store.review / "index.html"
+    if review.exists():
+        # re-point the page's relative links (review/ -> ../outputs/) at the export layout
+        html = review.read_text().replace("../outputs/", "")
+        (out / "review.html").write_text(html)
+    return str(out)
 
 
 if __name__ == "__main__":

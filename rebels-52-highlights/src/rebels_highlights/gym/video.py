@@ -136,6 +136,17 @@ class FrameWriter:
             raise RuntimeError(f"ffmpeg encode failed: {err[-800:]}")
 
 
+def atempo_chain(sp: float) -> list[float]:
+    """atempo accepts 0.5..100 per instance; chain for slower factors (product == sp)."""
+    sp = max(sp, 0.0625)
+    out = []
+    while sp < 0.5:
+        out.append(0.5)
+        sp /= 0.5
+    out.append(sp)
+    return out
+
+
 def mux_audio(video_only: Path, src: Optional[Path], segments: list[tuple[float, float, float]],
               out_path: Path, loudnorm: str, has_audio: bool) -> None:
     """Final mp4: copy video, build audio from ``segments`` = [(src_start, src_dur, speed)]
@@ -153,7 +164,7 @@ def mux_audio(video_only: Path, src: Optional[Path], segments: list[tuple[float,
         if sp > 0 and has_audio and src is not None:
             f = f"[s{k}]atrim=start={st:.4f}:duration={d:.4f},asetpts=PTS-STARTPTS"
             if abs(sp - 1) > 1e-3:
-                f += f",atempo={max(0.5, sp):.4f}"
+                f += "".join(f",atempo={t:.4f}" for t in atempo_chain(sp))
             chains.append(f + f"[p{i}]")
             k += 1
         else:
@@ -163,12 +174,20 @@ def mux_audio(video_only: Path, src: Optional[Path], segments: list[tuple[float,
     if not parts:
         chains.append(f"anullsrc=r=48000:cl=stereo,atrim=duration={max(total, 0.1):.4f}[p0]")
         parts = ["[p0]"]
-    chains.append("".join(parts) + f"concat=n={len(parts)}:v=0:a=1,loudnorm={loudnorm},"
-                  f"aresample=48000,apad[aout]")
+    real = has_audio and src is not None and bool(usable)
+    norm = f"loudnorm={loudnorm}," if real and loudnorm else ""   # loudnorm chokes on pure silence
+    head = ";".join(chains)
+    tail = "".join(parts) + f"concat=n={len(parts)}:v=0:a=1,{{norm}}aresample=48000,apad[aout]"
     args = ["-i", str(video_only)]
-    if has_audio and src is not None and usable:
+    if real:
         args += ["-i", str(src)]
-    args += ["-filter_complex", ";".join(chains), "-map", "0:v", "-map", "[aout]",
-             "-c:v", "copy", "-c:a", "aac", "-b:a", "160k", "-ar", "48000", "-shortest",
-             "-movflags", "+faststart", str(out_path)]
-    run_ffmpeg(args)
+    for nm in ([norm, ""] if norm else [""]):
+        fc = head + ";" + tail.format(norm=nm)
+        try:
+            run_ffmpeg(args + ["-filter_complex", fc, "-map", "0:v", "-map", "[aout]", "-c:v", "copy",
+                               "-c:a", "aac", "-b:a", "160k", "-ar", "48000", "-shortest",
+                               "-movflags", "+faststart", str(out_path)])
+            return
+        except subprocess.CalledProcessError:
+            if not nm:
+                raise
