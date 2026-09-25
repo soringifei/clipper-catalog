@@ -116,7 +116,7 @@ def player_pos(role: str, number: int, bx: float, by: float, u: float, sc: dict,
         return bx + 150 * ease(u / 3.0), by + (25 if by < 380 else -25) * ease(u / 3.0), False
     # OLB / S pursue at ~55 %
     s = 0.55 * ease(u / (t_imp + 0.8))
-    return bx + (ix + 60 - bx) * s, by + (iy - by) * s, False
+    return bx + (ix + 120 - bx) * s, by + (iy - by) * s * 0.7, False
 
 
 def player_box(x: float, y: float, fallen: bool) -> list[float]:
@@ -155,7 +155,7 @@ def render_play_frame(bg, u: float, sc: dict):
         items.append((y, team, num, box, fallen))
         if num == 52 and team == "reb":
             box52 = box
-    for _, team, num, box, fallen in sorted(items, key=lambda it: (it[4], it[0])):
+    for _, team, num, box, fallen in sorted(items, key=lambda it: (not it[4], it[0])):
         draw_player(img, team, num, box, fallen)
     cv2.rectangle(img, (20, 20), (330, 70), (20, 20, 20), -1)
     cv2.putText(img, "REBELS 14  VIS 7   Q2", (32, 54), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 255), 2, cv2.LINE_AA)
