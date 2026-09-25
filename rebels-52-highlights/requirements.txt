@@ -1,0 +1,15 @@
+# core (always required)
+numpy
+opencv-python-headless
+scenedetect
+pyyaml
+pillow
+imageio-ffmpeg
+yt-dlp
+# dev
+pytest
+# optional, better accuracy (install as needed):
+# ultralytics torch lap        # YOLO detection + BoT-SORT tracking / re-ID
+# paddleocr paddlepaddle       # jersey OCR
+# mediapipe                    # pose
+# sam2                         # segmentation
