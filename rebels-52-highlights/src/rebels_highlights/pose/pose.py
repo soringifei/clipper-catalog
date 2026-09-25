@@ -155,8 +155,13 @@ def box_kinematics(boxes: Sequence[Sequence[float]], times: Sequence[float]) -> 
 
 def pose_features(frames_crops: Optional[Sequence] , boxes: Sequence[Sequence[float]],
                   times: Sequence[float], cfg: Optional[dict] = None,
-                  max_crops: int = 16) -> dict[str, float]:
-    """Box kinematics + (when available) keypoint lean / torso-angle features."""
+                  max_crops: int = 16, crop_times: Optional[Sequence[float]] = None
+                  ) -> dict[str, float]:
+    """Box kinematics + (when available) keypoint lean / torso-angle features.
+
+    ``frames_crops`` are person crops aligned with ``boxes``/``times`` or, when
+    ``crop_times`` is given, a subset taken at those times.
+    """
     out = box_kinematics(boxes, times)
     out["keypoints"] = 0.0
     crops = list(frames_crops or [])
@@ -164,6 +169,9 @@ def pose_features(frames_crops: Optional[Sequence] , boxes: Sequence[Sequence[fl
         return {k: float(v) for k, v in out.items()}
     if _get_pose_model(cfg) is None:
         return {k: float(v) for k, v in out.items()}
+    if crop_times is None:
+        crop_times = list(times) if len(times) == len(crops) else \
+            list(np.linspace(times[0], times[-1], len(crops))) if len(times) else [0.0] * len(crops)
     idx = np.linspace(0, len(crops) - 1, min(max_crops, len(crops))).astype(int)
     angles, tt = [], []
     for i in idx:
@@ -173,7 +181,7 @@ def pose_features(frames_crops: Optional[Sequence] , boxes: Sequence[Sequence[fl
         dx = kp["sh"][0] - kp["hip"][0]
         dy = kp["hip"][1] - kp["sh"][1]  # up is positive
         angles.append(math.degrees(math.atan2(abs(dx), max(dy, 1e-3))))  # 0 = upright
-        tt.append(times[i] if i < len(times) else 0.0)
+        tt.append(float(crop_times[i]))
     if angles:
         out["keypoints"] = 1.0
         a = np.array(angles)
