@@ -154,7 +154,7 @@ def sprint(T: int, fps: float, H: float = 500, x_start: float = 100, speed_hps: 
         for side, off in (("l", 0.0), ("r", np.pi)):
             th = np.radians(10 + 45 * np.sin(ph + off))            # thigh angle fwd of vertical
             knee = hip + THIGH * H * np.array([np.sin(th), np.cos(th)])
-            flex = np.radians(40 + 50 * (0.5 + 0.5 * np.sin(ph + off - 1.2)))
+            flex = np.radians(25 + 85 * (0.5 + 0.5 * np.sin(ph + off - 1.2)))
             sh = th - flex
             ank = knee + SHANK * H * np.array([np.sin(sh), np.cos(sh)])
             k[KP[f"{side}_hip"]] = hip
@@ -261,6 +261,85 @@ def agility(T: int, fps: float, H: float = 600, x0: float = 640, amp_h: float = 
     return _with_conf(out)
 
 
-GENERATORS = {"squat": squat, "deadlift": deadlift, "bench": bench, "jump": jump,
+def pushup(T: int, fps: float, reps: int = 5, H: float = 700, x0: float = 300,
+           floor: float = 1000) -> np.ndarray:
+    """Push-up in side view: hands on the floor under the shoulders, rigid body line."""
+    out = []
+    for t in range(T):
+        d = 0.5 * (1 - np.cos(2 * np.pi * reps * t / T))
+        reach = (UARM + FARM) * H
+        ank = np.array([x0, floor - 0.03 * H])
+        body_len = (SHANK + THIGH + TRUNK) * H
+        sho_h = reach * (0.95 - 0.6 * d)
+        ang = np.arcsin(np.clip(sho_h / body_len, 0, 1))
+        sho = ank + body_len * np.array([np.cos(ang), -np.sin(ang)])
+        hip = ank + (SHANK + THIGH) * H * np.array([np.cos(ang), -np.sin(ang)])
+        knee = ank + SHANK * H * np.array([np.cos(ang), -np.sin(ang)])
+        wr = np.array([sho[0], floor - 0.02 * H])
+        elb = _ik(sho, wr, UARM * H, FARM * H, -1)
+        k = np.zeros((17, 2))
+        for n, p in {"sho": sho, "elb": elb, "wri": wr, "hip": hip, "knee": knee, "ank": ank}.items():
+            k[KP[f"l_{n}"]] = p
+            k[KP[f"r_{n}"]] = p + np.array([0.0, 3.0])
+        nose = sho + np.array([NECK * H, 0.02 * H])
+        for nm in ("nose", "l_eye", "r_eye", "l_ear", "r_ear"):
+            k[KP[nm]] = nose
+        out.append(k)
+    return _with_conf(out)
+
+
+GENERATORS = {"pushup": pushup, "squat": squat, "deadlift": deadlift, "bench": bench, "jump": jump,
               "sprint": sprint, "overhead_press": overhead_press, "olympic": clean,
               "lunge": lunge, "agility": agility}
+
+
+def render_stick_video(out_path, kps: np.ndarray, width: int, height: int, fps: float,
+                       audio: bool = True, rotate_meta: int = 0) -> str:
+    """Draw the keypoint sequence as a solid 'mannequin' over a gym-like background and
+    write an mp4 (H.264 + optional 440 Hz AAC tone). ``rotate_meta`` adds display-matrix
+    rotation metadata (e.g. 90) to mimic phone footage; frames are then stored rotated."""
+    import cv2
+    from pathlib import Path
+    from ..core.media import run_ffmpeg
+    from .video import FrameWriter
+    out_path = Path(out_path)
+    tmp = out_path.with_name(out_path.stem + ".noaudio.mp4")
+    bones = [(5, 7), (7, 9), (6, 8), (8, 10), (5, 6), (5, 11), (6, 12), (11, 12),
+             (11, 13), (13, 15), (12, 14), (14, 16)]
+    yy = np.linspace(0, 1, height)[:, None, None]
+    bg = (np.array([40, 34, 30]) * (1 - yy) + np.array([70, 64, 58]) * yy).astype(np.uint8)
+    bg = np.repeat(bg, width, axis=1)
+    cv2.rectangle(bg, (0, int(height * 0.9)), (width, height), (35, 45, 55), -1)
+    sw, sh = (height, width) if rotate_meta in (90, 270) else (width, height)
+    wr = FrameWriter(tmp, sw, sh, fps, 23, "ultrafast")
+    try:
+        for f in range(len(kps)):
+            img = bg.copy()
+            k = kps[f]
+            for a, b in bones:
+                pa, pb = k[a, :2], k[b, :2]
+                cv2.line(img, (int(pa[0]), int(pa[1])), (int(pb[0]), int(pb[1])), (180, 150, 120),
+                         max(6, width // 90), cv2.LINE_AA)
+            n = k[0, :2]
+            cv2.circle(img, (int(n[0]), int(n[1])), max(10, width // 45), (170, 140, 115), -1, cv2.LINE_AA)
+            w = (k[9, :2] + k[10, :2]) / 2
+            cv2.circle(img, (int(w[0]), int(w[1])), max(12, width // 40), (40, 40, 200), -1, cv2.LINE_AA)
+            if rotate_meta == 90:
+                img = cv2.rotate(img, cv2.ROTATE_90_COUNTERCLOCKWISE)
+            elif rotate_meta == 270:
+                img = cv2.rotate(img, cv2.ROTATE_90_CLOCKWISE)
+            wr.write(img)
+    finally:
+        wr.close()
+    dur = len(kps) / fps
+    args = []
+    if rotate_meta:
+        args += ["-display_rotation:v:0", str(-rotate_meta if rotate_meta == 90 else 90)]
+    args += ["-i", str(tmp)]
+    if audio:
+        args += ["-f", "lavfi", "-i", f"sine=frequency=440:duration={dur:.3f}:sample_rate=48000",
+                 "-c:a", "aac", "-shortest"]
+    args += ["-c:v", "copy", str(out_path)]
+    run_ffmpeg(args)
+    tmp.unlink(missing_ok=True)
+    return str(out_path)

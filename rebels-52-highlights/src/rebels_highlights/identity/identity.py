@@ -227,13 +227,20 @@ def _temporal(track: dict, play_dur: float, fps: float) -> float:
     return float(np.clip((0.6 * cov + 0.4 * dens) * stab, 0, 1))
 
 
-def _reid_discriminative(emb, proto, team_embs: list) -> float:
+def _reid_discriminative(emb, proto, team_embs: list) -> Optional[float]:
+    """Similarity to ``proto`` relative to the teammates' similarity.
+
+    Returns None (evidence unavailable) when the embedding cannot tell this
+    track apart from its teammates - e.g. colour histograms of identical kits.
+    """
     s = _reid.cosine(emb, proto)
     base = _reid.sim_to_conf(s)
     others = [_reid.cosine(e, proto) for e in team_embs]
     if not others:
         return base * 0.5
     mu, sd = float(np.mean(others)), float(np.std(others))
+    if sd < 0.03 and abs(s - mu) < 0.03:
+        return None
     z = (s - mu) / (sd + 0.02)
     return float(base * np.clip(0.5 + z / 4.0, 0, 1))
 

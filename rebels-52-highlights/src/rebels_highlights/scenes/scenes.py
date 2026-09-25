@@ -7,8 +7,9 @@ Heuristics (all tunable under ``cfg['scenes']``):
 * ``replay``: a green (field) scene shorter than ``replay_max_s`` that either
   shows a slow-motion signature (many near-duplicate consecutive frames while
   the picture still changes over longer spans) or looks like the preceding
-  live scene (HSV-histogram correlation >= ``replay_hist_sim``) while being
-  bracketed by a transition (followed by a very short / non-field scene).
+  live scene it directly follows (HSV-histogram correlation >= ``replay_hist_sim``)
+  while bracketed by a short wipe/transition scene. A non_play scene between two
+  field scenes marks a new play, never a replay.
 * otherwise ``live``.
 """
 from __future__ import annotations
@@ -152,17 +153,18 @@ def classify_scenes(spans: list[tuple[float, float]], stats: list[dict], sc: dic
         dup_ratio = st["dup"] / st["pairs"] if st["pairs"] else 0.0
         slowmo = moving and st["pairs"] >= 3 and dup_ratio >= sc["slowmo_dup_ratio"]
         prev_live = next((j for j in range(i - 1, -1, -1) if kinds[j] == "live"), None)
-        # nearest previous live scene must be adjacent or separated only by a transition
+        # nearest previous live scene must be adjacent or separated only by a short
+        # wipe. A scoreboard/sideline (non_play) scene in between means a new snap:
+        # broadcast cameras make consecutive live plays look alike, so similarity
+        # alone must not turn the next live play into a "replay".
         sim = 0.0
         if prev_live is not None and all(
-                kinds[j] == "non_play" or spans[j][1] - spans[j][0] <= sc["transition_max_s"]
+                spans[j][1] - spans[j][0] <= sc["transition_max_s"]
                 for j in range(prev_live + 1, i)):
             sim = _similarity(stats[prev_live]["hist"], st["hist"])
         nxt = i + 1
-        bracketed = (i > 0 and (kinds[i - 1] == "non_play" or
-                                spans[i - 1][1] - spans[i - 1][0] <= sc["transition_max_s"])) \
-            or (nxt < len(spans) and (green[nxt] < sc["green_min"] or
-                                      spans[nxt][1] - spans[nxt][0] <= sc["transition_max_s"]))
+        bracketed = (i > 0 and spans[i - 1][1] - spans[i - 1][0] <= sc["transition_max_s"]) \
+            or (nxt < len(spans) and spans[nxt][1] - spans[nxt][0] <= sc["transition_max_s"])
         if slowmo or (sim >= sc["replay_hist_sim"] and bracketed and prev_live is not None):
             kinds[i] = "replay"
     return kinds

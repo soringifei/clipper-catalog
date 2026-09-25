@@ -1,0 +1,6 @@
+# Synthetic smoke-test game (python scripts/make_synthetic_game.py --out data/raw/synthetic.mp4)
+games:
+  - game_id: game_900
+    local_path: data/raw/synthetic.mp4
+    date: unknown
+    opponent: unknown
