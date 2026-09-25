@@ -1,0 +1,67 @@
+# Gym training-clip analysis (python -m rebels_highlights gym --input <folder|file>)
+# Every value here can be left out: gym/config.py holds the same defaults.
+
+paths:
+  outputs: outputs/gym          # outputs/gym/<clip_stem>/{<stem>_gym.mp4,.jpg,analysis.json}
+  cache: cache/gym              # per-clip pose cache (re-renders skip the model)
+  models: cache/models          # YOLO weights land here
+
+athlete:
+  tag: "#52 | MLB | BUCHAREST REBELS"
+  name: ""                      # optional, shown on intro card when set
+  height_m: 1.85                # used to convert px -> metres (all speeds labelled 'est.')
+
+pose:
+  model: yolo11n-pose.pt        # yolo11s-pose.pt = better keypoints, ~2.5x slower on CPU
+  device: cpu
+  imgsz: 640
+  conf: 0.25
+  tracker: bytetrack.yaml
+  max_pose_hz: 30               # pose runs at <= this rate, keypoints interpolated between
+  analysis_long_side: 960       # frames are downscaled to this for the model
+  kp_min_conf: 0.45             # keypoints below this are dropped (never drawn)
+  max_gap_s: 0.25               # gaps shorter than this are interpolated
+  smoothing: one_euro           # one_euro | savgol | none
+  one_euro: {min_cutoff: 1.2, beta: 0.02, d_cutoff: 1.0}
+  plate_tracker: false          # true: optical-flow track of a bar-end plate near the hands
+
+video:
+  max_work_fps: 60              # 60 fps sources keep real slow-mo frames
+  out_fps: 30
+  width: 1080
+  height: 1920
+  crf: 20
+  preset: veryfast
+  loudnorm: "I=-14:TP=-1.5:LRA=11"
+  max_zoom: 1.6
+  crop_smoothing: 0.90          # forward-backward EMA factor (0..1, higher = calmer)
+
+edit:
+  min_clip_s: 15
+  max_clip_s: 60                # long raw clips are trimmed to the best run of reps
+  intro_s: 1.4
+  outro_s: 2.6
+  slowmo_speed: 0.5
+  slowmo_window_s: 0.45         # each side of the rep's peak position
+  freeze_s: 0.7
+  peak_moments: auto            # auto (all reps if <= 5 else best 3) | all | best | none
+  sparkline: true
+  label_min_confidence: 0.55    # exercise name only shown above this confidence
+
+style:
+  accent: "#E10600"
+  font: /usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf
+  font_regular: /usr/share/fonts/truetype/dejavu/DejaVuSans.ttf
+  skeleton_color: "#FFFFFF"
+  trail_s: 1.6
+
+mix:
+  max_clips: 6
+  per_clip_max_s: 12
+
+# Per-file exercise override (fnmatch glob on the file name, first match wins).
+# Valid: squat, deadlift, bench, overhead_press, olympic, jump, sprint, agility,
+#        lunge, pushup, generic
+exercise_overrides:
+  # "*squat*": squat
+  # "IMG_0412.MOV": olympic

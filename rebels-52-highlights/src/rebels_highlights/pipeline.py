@@ -185,6 +185,8 @@ class Pipeline:
             c.output_file = out["output_file"]
             c.thumbnail_file = out["thumbnail_file"]
             c.output_duration_s = out["output_duration_s"]
+            for k in ("seed_frame", "seed_frame_size", "seed_frame_t"):
+                setattr(c, k, out.get(k))
             q = qa_clip(c.output_file, c, traj, self.cfg)
             qa_results.append(q)
             if not q["passed"]:

@@ -90,6 +90,14 @@ render:
   context_weights: {player: 0.5, target: 0.3, contact: 0.2}
   max_digital_zoom: 2.2
   loudnorm: "I=-14:TP=-1.5:LRA=11"
+  preset: medium
+  accent_color: "#E10600"
+  end_card_s: 2.5
+  replay_trail: true
+  thumbnail_tag: true
+
+audio:
+  music_volume: 0.30
 
 mix:
   durations: [30, 45, 60]

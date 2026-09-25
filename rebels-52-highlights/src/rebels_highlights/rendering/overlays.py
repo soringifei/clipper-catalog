@@ -153,7 +153,7 @@ def draw_ident_bar(layer: Image.Image, title: str, subtitle: Optional[str] = Non
     W, H = layer.size
     d = ImageDraw.Draw(layer)
     rgb = hex_to_rgb(color)
-    ft = load_font(max(28, int(W * 0.052)))
+    ft = load_font(max(26, int(W * 0.044)))
     fs = load_font(max(22, int(W * 0.036)), bold=False)
     tw, th = text_size(ft, title)
     sw, sh = text_size(fs, subtitle) if subtitle else (0, 0)

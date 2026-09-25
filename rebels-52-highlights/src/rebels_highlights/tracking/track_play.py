@@ -28,7 +28,7 @@ import cv2
 import numpy as np
 
 from ..core.models import Play, Track
-from ..detection.detector import PersonDetector, annotate
+from ..detection.detector import PersonDetector, annotate, blob_detect
 from ..reid import reid as _reid
 from .iou_tracker import IouTracker
 
@@ -226,8 +226,21 @@ def _resolve_tracker(cfg: dict, det: PersonDetector) -> tuple[str, Optional[str]
     return "iou", None
 
 
-def _play_attr(play, k, default=None):
-    return getattr(play, k, None) if not isinstance(play, dict) else play.get(k, default)
+def _maybe_fallback(det: PersonDetector, video_path: str, play: Play) -> None:
+    """YOLO sees no people but the field has player-like blobs (synthetic/cartoon
+    footage, tiny far-away players): switch this play to the OpenCV detector."""
+    d = max(0.0, play.end_s - play.start_s)
+    probes = read_frames_at(video_path, [play.start_s + f * d for f in (0.2, 0.5, 0.8)])
+    if not probes:
+        return
+    try:
+        n_yolo = sum(len(det._detect_yolo(f)) for f in probes.values())
+    except Exception:  # noqa: BLE001
+        n_yolo = 0
+    n_blob = sum(len(blob_detect(f)) for f in probes.values())
+    if n_yolo == 0 and n_blob >= 2 * len(probes):
+        det.yolo = None
+        det.backend = "opencv"
 
 
 def track_play(video_path: str, play, cfg: dict, device: str = "cpu") -> dict:
@@ -237,6 +250,8 @@ def track_play(video_path: str, play, cfg: dict, device: str = "cpu") -> dict:
     fps = float(dc.get("fine_fps", 15))
     det = PersonDetector(model=dc.get("model", "yolo11n.pt"), device=device,
                          conf=float(dc.get("conf", 0.25)), imgsz=int(dc.get("imgsz", 960)), cfg=cfg)
+    if det.yolo is not None and str(dc.get("backend", "auto")) == "auto":
+        _maybe_fallback(det, video_path, play)
     tracker_name, tracker_yaml = _resolve_tracker(cfg, det)
     emb_backend = _reid.backend_from_cfg(cfg)
     tb = int(cfg.get("tracking", {}).get("track_buffer", 30))
