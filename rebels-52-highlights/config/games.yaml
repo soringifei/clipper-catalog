@@ -1,0 +1,29 @@
+# Games to process. `hint_start_s` comes from the &t= in the shared link:
+# a known moment of interest, used to prioritise review. It is NOT a play label.
+# date/opponent stay "unknown" until supplied - never invent metadata.
+# If YouTube is unreachable, set `local_path` to a downloaded copy.
+games:
+  - game_id: game_001
+    url: https://www.youtube.com/watch?v=1JSIkdhxKF8
+    hint_start_s: 2593
+    date: unknown
+    opponent: unknown
+    local_path: null
+  - game_id: game_002
+    url: https://www.youtube.com/watch?v=Ju36m_a6XII
+    hint_start_s: 4799
+    date: unknown
+    opponent: unknown
+    local_path: null
+  - game_id: game_003
+    url: https://www.youtube.com/watch?v=PBp3puYUQt8
+    hint_start_s: 3287
+    date: unknown
+    opponent: unknown
+    local_path: null
+  - game_id: game_004
+    url: https://www.youtube.com/watch?v=B_5LXrSMckY
+    hint_start_s: 9198
+    date: unknown
+    opponent: unknown
+    local_path: null
