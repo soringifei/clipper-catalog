@@ -253,6 +253,8 @@ class EpicClip:
         self.pl = _BoxTrack(_g(trajectory, "times", []), _g(trajectory, "boxes", []))
         self.tg = _BoxTrack(_g(trajectory, "target_times", []), _g(trajectory, "target_boxes", []))
         self.trajectory = trajectory
+        hs = [b[3] - b[1] for b in (_g(trajectory, "boxes", []) or []) if b]
+        self.h_med = float(np.median(hs)) if hs else 0.2 * (self.src_h or 720)
         self.beats = None
         if music_file and Path(music_file).is_file():
             try:
@@ -309,13 +311,18 @@ class EpicClip:
             if pb is not None:
                 cb = xf.box(pb)
                 ph = cb[3] - cb[1]
+                cap = self.h_med * 1.4 * xf.sy
+                if ph > cap:   # merged / pile boxes: keep a plausible body around the centre
+                    yc = (cb[1] + cb[3]) / 2
+                    cb = [cb[0], yc - cap / 2, cb[2], yc + cap / 2]
+                    ph = cap
                 occ.append((cb[1] - 0.25 * ph, cb[3] + 0.25 * ph))
             # the target only matters around the contact; cap implausible boxes
             tb = self.tg.at(float(t), hold=0.2) if abs(t - self.impact) < 0.8 else None
             if tb is not None:
                 cb = xf.box(tb)
                 h = cb[3] - cb[1]
-                cap = 1.5 * ph if ph else h
+                cap = 1.5 * (ph or self.h_med * xf.sy)
                 if h > cap:
                     yc = (cb[1] + cb[3]) / 2
                     cb = [cb[0], yc - cap / 2, cb[2], yc + cap / 2]
@@ -357,7 +364,7 @@ class EpicClip:
                            fill=(235, 235, 235))
         nm = S.TextSprite(self.name, "title", 96) if self.name else None
         stack_h = num.text_h + 30 + sub.text_h + (nm.text_h + 18 if nm else 0)
-        yc = S.text_zone(occ, OUT_H, stack_h + 40, (0.25, 0.72, 0.3, 0.68)) or OUT_H * 0.25
+        yc = S.text_zone(occ, OUT_H, stack_h + 40, (0.25, 0.72, 0.3, 0.68)) or OUT_H * 0.22
         y = yc - stack_h / 2
         t0 = snap_b(it["out_start"] + 0.1)
         t_exit = it["out_end"] + 0.06
@@ -392,7 +399,7 @@ class EpicClip:
             post_end = lv["out_end"] - 0.05
             if self.has_contact:
                 a = o0 + float(ramp.out(I + 0.03))
-                b = post_end if not self.label else min(post_end, a + 0.85)
+                b = min(post_end, a + (0.85 if self.label else 1.2))
                 words.append(("FINISH.", a, b))
             for txt, a, b in words:
                 a = snap_b(a)
@@ -420,11 +427,16 @@ class EpicClip:
         # end card stack
         ec = segs["endcard"]
         occ = self.occupied(np.array([ec["t0"]]), 1.0, contact=False)
-        hs = S.TextSprite(f"#{self.num}", "display", 360, glyph_fills={0: self.accent})
-        tm = S.TextSprite(self.team, "text", 44, tracking=0.34, weight="Medium", underline=self.accent)
-        nm = S.TextSprite(self.name, "title", 120) if self.name else None
-        stack_h = hs.text_h + 26 + tm.text_h + (nm.text_h + 16 if nm else 0)
-        yc = S.text_zone(occ, OUT_H, stack_h + 40, (0.3, 0.7, 0.25, 0.74)) or OUT_H * 0.3
+        for k_sz in (1.0, 0.82, 0.68):   # shrink the stack until it clears the players
+            hs = S.TextSprite(f"#{self.num}", "display", int(360 * k_sz), glyph_fills={0: self.accent})
+            tm = S.TextSprite(self.team, "text", int(44 * max(k_sz, 0.85)), tracking=0.34,
+                              weight="Medium", underline=self.accent)
+            nm = S.TextSprite(self.name, "title", int(120 * k_sz)) if self.name else None
+            stack_h = hs.text_h + 26 + tm.text_h + (nm.text_h + 16 if nm else 0)
+            yc = S.text_zone(occ, OUT_H, stack_h + 40, (0.3, 0.7, 0.25, 0.74))
+            if yc is not None:
+                break
+        yc = yc if yc is not None else OUT_H * 0.28
         y = yc - stack_h / 2
         t0 = snap_b(ec["out_start"] + 4 / fps)
         t_end = ec["out_end"] + 1.0         # held through the fade to black
@@ -783,7 +795,10 @@ def render_epic(cand: Candidate, info: VideoInfo, trajectory: PlayerTrajectory, 
     ec = next(s for s in segs if s["kind"] == "endcard")
     I = plan["impact"]
     lo, hi = min(I + 0.12, plan["s1"]), min(plan["s1"], I + 0.95)
-    ec["t0"] = _visibility_pick(clip.pl, clip.tg, lo, max(lo, hi), path) if clip.pl.ok else ec["t0"]
+    if clip.pl.ok:   # stay where #52 is actually tracked
+        lo = float(np.clip(lo, clip.pl.t[0], clip.pl.t[-1]))
+        hi = float(np.clip(hi, clip.pl.t[0], clip.pl.t[-1]))
+        ec["t0"] = _visibility_pick(clip.pl, clip.tg, lo, max(lo, hi), path)
 
     tmp_mp4 = out_mp4.with_suffix(".tmp.mp4")
     wav = Path(tempfile.mkstemp(suffix=".wav", prefix="epic_")[1])
@@ -819,8 +834,12 @@ def render_epic(cand: Candidate, info: VideoInfo, trajectory: PlayerTrajectory, 
     os.replace(tmp_mp4, out_mp4)
 
     # ---- poster thumbnail: graded impact frame + '52' in the display font
-    t_th = _visibility_pick(clip.pl, clip.tg, max(plan["s0"], I - 0.45), max(plan["s0"], I + 0.05), path) \
-        if clip.pl.ok else I
+    t_th = I
+    if clip.pl.ok:
+        lo_t, hi_t = float(clip.pl.t[0]), float(clip.pl.t[-1])
+        a_t = float(np.clip(I - 0.45, lo_t, hi_t))
+        b_t = float(np.clip(I + 0.05, lo_t, hi_t))
+        t_th = _visibility_pick(clip.pl, clip.tg, min(a_t, b_t), max(a_t, b_t), path)
     thumb = poster(clip, t_th)
     cv2.imwrite(str(out_jpg), thumb, [cv2.IMWRITE_JPEG_QUALITY, 92])
     seed_jpg, seed_t = write_seed_frame(clip.reader, out_dir_p, base, plan["snap"], plan["s0"])
@@ -868,17 +887,18 @@ def poster(clip: EpicClip, t: float) -> np.ndarray:
     """Poster-style thumbnail: graded frame, heavy vignette, huge '52'."""
     import cv2
     st = clip.st
-    frame, xf = clip.compose(t, 1.0)
+    z = min(1.1, clip.fx_zoom)
+    frame, xf = clip.compose(t, z)
     frame = clip.grader(frame, 0, grain=True)
     frame = cv2.multiply(frame, clip.grader.vig, scale=1 / 255.0)
-    occ = clip.occupied(np.array([t]), 1.0, contact=False)
+    occ = clip.occupied(np.array([t]), z, contact=False)
     num = S.TextSprite(clip.num, "display", 540)
     tm = S.TextSprite(clip.team, "text", 46, tracking=0.34, weight="Medium", underline=st.accent)
     h = num.text_h + 24 + tm.text_h
     yc = (S.text_zone(occ, OUT_H, h + 40, (0.7, 0.26, 0.66, 0.3, 0.74, 0.22), gap=60)
           or S.text_zone(occ, OUT_H, h + 40, (0.7, 0.26, 0.66, 0.3, 0.74, 0.22)) or OUT_H * 0.7)
     # soft dark gradient behind the type for legibility
-    g = np.clip(1 - np.abs(np.arange(OUT_H) - yc) / (h * 0.9), 0, 1) ** 1.5 * 0.45
+    g = np.clip(1 - np.abs(np.arange(OUT_H) - yc) / (h * 1.1), 0, 1) ** 1.2 * 0.62
     frame = (frame.astype(np.float32) * (1 - g)[:, None, None]).astype(np.uint8)
     y = yc - h / 2
     S.blit(frame, num, OUT_W / 2, y + num.text_h / 2)
