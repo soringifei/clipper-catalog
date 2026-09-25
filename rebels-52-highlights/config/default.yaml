@@ -1,0 +1,97 @@
+paths:
+  cache: cache
+  state: state
+  raw: data/raw
+  proxies: data/proxies
+  outputs: outputs
+  review: review
+  reports: reports
+
+device: auto            # auto | cpu | cuda | mps
+workers: 2
+
+proxy:
+  height: 540
+  fps: 10
+
+scenes:
+  detector: adaptive
+  threshold: 3.0
+  min_scene_len_s: 0.6
+
+plays:
+  min_play_s: 3.0
+  max_play_s: 15.0
+  snap_motion_jump: 2.5     # x baseline pre-snap motion
+  settle_motion_ratio: 0.35
+
+detection:
+  model: yolo11n.pt         # upgraded automatically on GPU (yolo11m/x)
+  conf: 0.25
+  imgsz: 960
+  fine_fps: 15
+
+tracking:
+  tracker: botsort          # botsort | tracktrack | deepocsort | iou (fallback)
+  with_reid: true
+  track_buffer: 60
+
+identity:
+  weights:
+    jersey_ocr: 0.35
+    reid: 0.25
+    team_kit: 0.15
+    temporal: 0.15
+    reference: 0.10
+  position_prior_weight: 0.05   # weak, never sufficient on its own
+  min_ocr_votes: 3              # a single "52" frame never proves identity
+  auto_accept: 0.80
+  review_min: 0.55
+
+events:
+  auto_label_min: 0.70
+  review_below: 0.65
+  forced_fumble_auto: 0.85
+  sack_auto: 0.80
+  tfl_auto: 0.80
+  los_min_confidence: 0.6
+  contact_iou: 0.05
+  contact_dist_ratio: 0.6   # centre distance / mean box height
+
+scoring:
+  tiers:
+    S: [forced_fumble, fumble_recovery, sack]
+    A: [tackle_for_loss, open_field_tackle, special_teams_tackle]
+    B: [run_stop_near_los, qb_pressure, block_shed, solo_tackle]
+    C: [assisted_tackle, pursuit, coverage_play, kickoff_coverage, punt_coverage, tackle]
+  weights:
+    primary_actor: 0.30
+    football_impact: 0.25
+    visibility: 0.15
+    visual_quality: 0.10
+    editability: 0.10
+    identity: 0.10
+
+render:
+  width: 1080
+  height: 1920
+  fps: 30
+  crf: 20
+  lead_in_s: 2.5
+  lead_out_s: 1.5
+  slowmo_speed: 0.55
+  replay_zoom: 1.30
+  arrow_duration_s: 1.0
+  ident_card_s: 0.8
+  min_clip_s: 15
+  max_clip_s: 60
+  safe_region: 0.6          # #52 kept inside central 60% of crop width
+  crop_smoothing: 0.85
+  context_weights: {player: 0.5, target: 0.3, contact: 0.2}
+  max_digital_zoom: 2.2
+  loudnorm: "I=-14:TP=-1.5:LRA=11"
+
+mix:
+  durations: [30, 45, 60]
+  max_same_game_consecutive: 2
+  min_identity: 0.80
