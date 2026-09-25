@@ -304,12 +304,23 @@ class EpicClip:
         occ = []
         for t in ts:
             xf = xform_for(self.path, float(t), zoom)
-            for tr in (self.pl, self.tg):
-                b = tr.at(float(t), hold=0.2)
-                if b is not None:
-                    cb = xf.box(b)
-                    m = 0.25 * (cb[3] - cb[1])
-                    occ.append((cb[1] - m, cb[3] + m))
+            pb = self.pl.at(float(t), hold=0.2)
+            ph = None
+            if pb is not None:
+                cb = xf.box(pb)
+                ph = cb[3] - cb[1]
+                occ.append((cb[1] - 0.25 * ph, cb[3] + 0.25 * ph))
+            # the target only matters around the contact; cap implausible boxes
+            tb = self.tg.at(float(t), hold=0.2) if abs(t - self.impact) < 0.8 else None
+            if tb is not None:
+                cb = xf.box(tb)
+                h = cb[3] - cb[1]
+                cap = 1.5 * ph if ph else h
+                if h > cap:
+                    yc = (cb[1] + cb[3]) / 2
+                    cb = [cb[0], yc - cap / 2, cb[2], yc + cap / 2]
+                    h = cap
+                occ.append((cb[1] - 0.25 * h, cb[3] + 0.25 * h))
             if contact and self.contact is not None and abs(t - self.impact) < 0.8:
                 cy = xf(self.contact[0], self.contact[1])[1]
                 occ.append((cy - 170, cy + 170))
