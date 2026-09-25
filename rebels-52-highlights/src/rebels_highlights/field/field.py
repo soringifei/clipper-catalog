@@ -248,11 +248,12 @@ def _estimate_los(boxes: list[list[float]], field: dict, fc: dict,
     along_spread = float(np.std(fx @ np.array([ax, ay]))) + 1e-6 if n_cl else 1.0
     across_spread = float(np.std(fx @ np.array([-ay, ax]))) if n_cl >= 2 else 0.0
     elong = across_spread / along_spread
-    sep_s = min(1.0, max(0.0, (sep - 1.2) / 2.8))        # 1.2 -> 0, 4 -> 1
+    sep_s = min(1.0, max(0.0, (sep - 2.0) / 6.0))        # 2 -> 0, 8 -> 1
     elong_s = min(1.0, max(0.0, (elong - 0.8) / 2.2))   # 0.8 -> 0, 3 -> 1
-    dens_s = min(1.0, max(0.0, (density - 0.2) / 0.4))  # 20% -> 0, 60% -> 1
-    side_s = min(1.0, max(0.0, (min_side - 2) / 3.0))   # 2 -> 0, 5 per side -> 1
-    conf = (0.35 * sep_s + 0.20 * elong_s + 0.20 * dens_s + 0.25 * side_s) * line_factor
+    dens_s = min(1.0, max(0.0, (density - 0.3) / 0.4))  # 30% -> 0, 70% -> 1
+    side_s = min(1.0, max(0.0, (min_side - 2) / 4.0))   # 2 -> 0, 6 per side -> 1
+    # two real lines (>= ~5 facing players each) gate everything else
+    conf = (0.4 * sep_s + 0.3 * elong_s + 0.3 * dens_s) * (0.4 + 0.6 * side_s) * line_factor
     v_c = float(np.median(uv[in_cl, 1])) if n_cl else float(np.median(uv[:, 1]))
     px, py = _from_field(los_u, v_c, field)
     th = math.radians(field.get("line_angle_deg") if field.get("line_angle_deg") is not None

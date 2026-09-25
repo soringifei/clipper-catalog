@@ -177,3 +177,23 @@ def test_field_and_los():
     g = estimate_field(frame, rand, {})
     assert g["los_confidence"] < f["los_confidence"]
     assert estimate_field(None, boxes, {})["los_x"] is None
+
+
+def test_classify_replay_heuristic():
+    from rebels_highlights.scenes.scenes import DEFAULTS, classify_scenes
+    rng = np.random.default_rng(3)
+    h_live = [np.abs(rng.normal(1, 0.1, 480)).astype(np.float32) for _ in range(4)]
+    h_other = [np.eye(1, 480, 7, dtype=np.float32)[0] for _ in range(4)]
+
+    def st(green, hist, change=3.0, dup=0, pairs=10):
+        return {"green": [green] * 4, "hist": hist, "dup": dup, "pairs": pairs,
+                "change": [change] * 4}
+
+    spans = [(0, 30), (30, 36), (36, 37), (37, 60), (60, 66)]
+    stats = [st(0.7, h_live),                   # live
+             st(0.7, h_live),                   # short, similar, then a wipe -> replay
+             st(0.1, h_other),                  # wipe / graphic
+             st(0.7, h_live),                   # live (long)
+             st(0.6, h_other, dup=6, pairs=10)]  # slow-motion signature -> replay
+    assert classify_scenes(spans, stats, DEFAULTS) == [
+        "live", "replay", "non_play", "live", "replay"]
