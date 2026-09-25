@@ -686,7 +686,7 @@ class RampMap:
 
 # ==================================================================== layout
 def text_zone(occupied: Sequence[tuple[float, float]], H: int = 1920, text_h: float = 240,
-              zones: Sequence[float] = (0.22, 0.74, 0.30, 0.66), gap: float = 12.0) -> Optional[float]:
+              zones: Sequence[float] = (0.22, 0.74, 0.30, 0.66, 0.18, 0.78), gap: float = 12.0) -> Optional[float]:
     """Centre y of a text band (height ``text_h``) not overlapping any y-range in
     ``occupied`` (canvas px). Candidates stay out of the platform UI areas
     (top ~13 %, bottom ~20 %). Returns None when nothing is free."""
