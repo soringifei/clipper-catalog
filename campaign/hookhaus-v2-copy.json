@@ -1,0 +1,91 @@
+{
+  "schema": 1,
+  "source": "clipper/CAMPAIGN-V2.md (25.09.2026)",
+  "language": "en",
+  "bio": "Long podcasts cut into vertical clips. Send me an episode, I'll edit one free.",
+  "pins": [
+    {
+      "id": "pin-before-after",
+      "format": "before-after",
+      "onScreen": "[the strongest spoken line of the clip, checked against the audio]",
+      "caption": "Left: the raw 16:9 interview. Right: the vertical cut, with the frame kept on the speaker and captions timed to each word. The source is a NASA interview in the public domain. If you want your episode cut like this, DM me.",
+      "hashtags": ["#podcastclips", "#beforeandafter", "#videoediting", "#podcast"]
+    },
+    {
+      "id": "pin-prices",
+      "format": "prices",
+      "onScreen": "What a clip costs",
+      "caption": "Trial: one clip for 25 €, one round of changes. You send the episode, the moment you like and where you post. Monthly packs start at 150 €. DM me with a link and I'll reply with the scope.",
+      "hashtags": ["#podcastclips", "#podcastediting", "#videoeditor"]
+    },
+    {
+      "id": "pin-free-sample",
+      "format": "free-sample",
+      "onScreen": "Send me your podcast. I'll cut one clip free.",
+      "caption": "Send a link to an episode you own. I pick a moment, cut it vertical with captions and send you the file. I only post it here if you say yes. You keep the clip either way.",
+      "hashtags": ["#podcast", "#podcasters", "#podcastclips"]
+    }
+  ],
+  "hooks": [
+    {
+      "format": "before-after",
+      "onScreen": "Nobody scrolls to the middle of your episode.",
+      "caption": "So I take the moment from the middle and put it first. Before: the raw recording. After: vertical, captions you can read on mute.",
+      "hashtags": ["#podcastclips", "#beforeandafter", "#podcast"]
+    },
+    {
+      "format": "before-after",
+      "onScreen": "This is your podcast on a phone.",
+      "caption": "A wide shot shrinks the faces to a strip in the middle of the screen. Here is the same moment reframed for vertical.",
+      "hashtags": ["#podcast", "#videoediting", "#verticalvideo"]
+    },
+    {
+      "format": "before-after",
+      "onScreen": "Same interview. Watch what the vertical cut keeps.",
+      "caption": "I dropped the setup and kept the answer. The raw version plays first, then the clip.",
+      "hashtags": ["#podcastclips", "#beforeandafter", "#interview"]
+    },
+    {
+      "format": "process",
+      "onScreen": "Skip the title card. Open with the line.",
+      "caption": "A title card asks people to wait. The speaker's best sentence gives them a reason to stay. Here is how I find it in a long recording.",
+      "hashtags": ["#podcasttips", "#videoediting", "#podcastclips"]
+    },
+    {
+      "format": "process",
+      "onScreen": "I cut the pause right before the punchline.",
+      "caption": "Screen recording of the edit. Watch the timeline where the silence was.",
+      "hashtags": ["#videoediting", "#editingtips", "#podcast"]
+    },
+    {
+      "format": "process",
+      "onScreen": "Captions should follow the words, not the sentence.",
+      "caption": "Each word lights up when it's said, so people watching on mute can keep up with the speaker.",
+      "hashtags": ["#captions", "#videoediting", "#podcastclips"]
+    },
+    {
+      "format": "process",
+      "onScreen": "Two people talking. One vertical frame. Who gets the shot?",
+      "caption": "My rule: the camera stays on whoever is talking and cuts to the other person only for a reaction worth seeing.",
+      "hashtags": ["#podcast", "#videoediting", "#interview"]
+    },
+    {
+      "format": "process",
+      "onScreen": "Where I look first in a long recording.",
+      "caption": "Laughs, disagreements and stories with an ending. They tend to show up as louder stretches in the waveform, so I start there.",
+      "hashtags": ["#podcasttips", "#videoediting", "#contentcreator"]
+    },
+    {
+      "format": "free-sample",
+      "onScreen": "Send me one episode. I'll send back a clip.",
+      "caption": "Free, for podcasters and coaches who talk to camera. Link an episode you own in my DMs. I only post the result here with your OK.",
+      "hashtags": ["#podcasters", "#podcast", "#coaching"]
+    },
+    {
+      "format": "free-sample",
+      "onScreen": "Before you hire an editor, watch one of your own clips.",
+      "caption": "Judge the editing on your own footage, not on someone else's reel. DM me a link and I'll cut one clip free.",
+      "hashtags": ["#podcasters", "#podcastclips", "#videoeditor"]
+    }
+  ]
+}
