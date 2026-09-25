@@ -195,8 +195,12 @@ def compute_crop_path(trajectory: Any, event: Any, src_w: int, src_h: int,
         if spread > 0.95 * src_w:
             reasons.append("POOR_VERTICAL_CROP")
 
-    tw = wt * tvalid.astype(float)
     tx0, ty0 = np.nan_to_num(tx), np.nan_to_num(ty)
+    # target only pulls the frame when it can share it with #52 (full pull when
+    # within ~0.35 crop widths, none beyond ~0.85): far targets keep #52 centred
+    dist = np.abs(tx0 - px)
+    prox = np.clip(1.0 - (dist - 0.35 * crop_w) / (0.5 * crop_w), 0.0, 1.0)
+    tw = wt * tvalid.astype(float) * prox
     den = wp + tw + wct
     dx = (wp * px + tw * tx0 + wct * ccx) / den
     dy = (wp * py + tw * ty0 + wct * ccy) / den

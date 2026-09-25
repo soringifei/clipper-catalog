@@ -161,6 +161,20 @@ def test_render_clip(rendered):
     import cv2
     th = cv2.imread(res["thumbnail_file"])
     assert th.shape[:2] == (1920, 1080)
+    # seed frame (landscape, pre-snap) for manual seeding
+    seed = cv2.imread(res["seed_frame"])
+    assert seed.shape[:2] == (H, W) and res["seed_frame_size"] == [W, H]
+    assert res["seed_frame_t"] < SNAP
+    # QA crop sidecar: #52 inside the central safe region for >95% of real-time frames
+    import json
+    meta = json.loads(Path(res["crop_file"]).read_text())
+    assert Path(res["crop_file"]).name == Path(res["output_file"]).stem + ".crop.json"
+    ok = []
+    for f in meta["frames"]:
+        x1, _, x2, _ = f["crop"]
+        half = meta["safe_region"] * (x2 - x1) / 2
+        ok.append(abs(f["player_x"] - (x1 + x2) / 2) <= half + 1e-3)
+    assert len(ok) > 100 and np.mean(ok) > 0.95
 
 
 def test_music_version(source, cfg, workdir):
@@ -193,3 +207,21 @@ def test_build_mix(rendered, cfg, workdir):
     clips[1].review_status = "REVIEW"
     res2 = build_mix(clips, cfg, str(workdir / "mixes"), 30, version=2)
     assert res2 is None or clips[1].clip_id not in res2["clip_ids"]
+
+
+def test_render_debug(source, cfg, workdir):
+    from rebels_highlights.core.models import Play
+    from rebels_highlights.rendering.render import render_debug
+    cand, info, traj, ev = make_case(source, 5, "sack", "defense", "S", 0.9)
+    play = Play(play_id=traj.play_id, game_id="game_001", start_s=5.5, end_s=7.0,
+                estimated_snap_s=SNAP, unit="defense")
+    tracking = {"tracks": [{"track_id": 7, "scene_id": 0, "times": traj.times, "boxes": traj.boxes,
+                            "team_prob": 0.9},
+                           {"track_id": 9, "scene_id": 0, "times": traj.target_times,
+                            "boxes": traj.target_boxes, "team_prob": 0.1}]}
+    identity = {"best_track_id": 7, "identity_confidence": 0.91, "trajectory": traj.to_dict(),
+                "evidence": [{"track_id": 7, "scene_id": 0, "identity_confidence": 0.91,
+                              "ocr_votes": {"52": 5}}]}
+    out = render_debug(source, play, tracking, identity, ev, cfg, str(workdir / "dbg" / "d.mp4"))
+    pi = probe(out)
+    assert (pi["width"], pi["height"]) == (W, H) and pi["duration"] > 1.0

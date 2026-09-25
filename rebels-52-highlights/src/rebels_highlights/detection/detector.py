@@ -35,16 +35,20 @@ def field_region(frame_bgr: np.ndarray, grass: Optional[np.ndarray] = None) -> O
     H, W = g.shape
     if g.mean() / 255.0 < 0.15:
         return None
-    k = max(5, int(min(H, W) * 0.03)) | 1
-    closed = cv2.morphologyEx(g, cv2.MORPH_CLOSE, cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (k, k)))
+    s = min(1.0, 320.0 / W)  # work at low resolution, scale the hull back up
+    gs = cv2.resize(g, (max(1, int(W * s)), max(1, int(H * s))), interpolation=cv2.INTER_NEAREST) if s < 1 else g
+    k = max(5, int(min(gs.shape) * 0.03)) | 1
+    closed = cv2.morphologyEx(gs, cv2.MORPH_CLOSE, cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (k, k)))
     n, lab, stats, _ = cv2.connectedComponentsWithStats(closed)
     if n <= 1:
         return None
     i = 1 + int(np.argmax(stats[1:, cv2.CC_STAT_AREA]))
-    pts = cv2.findNonZero((lab == i).astype(np.uint8))
-    hull = cv2.convexHull(pts)
+    cnts, _ = cv2.findContours((lab == i).astype(np.uint8), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    if not cnts:
+        return None
+    hull = cv2.convexHull(np.vstack(cnts)).astype(np.float32) / s
     m = np.zeros_like(g)
-    cv2.fillConvexPoly(m, hull, 255)
+    cv2.fillConvexPoly(m, np.round(hull).astype(np.int32), 255)
     return m
 
 

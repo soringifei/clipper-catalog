@@ -203,3 +203,6 @@ class Candidate(_Serializable):
     thumbnail_file: Optional[str] = None
     replay_segments: list[dict[str, float]] = field(default_factory=list)
     canonical_play_id: Optional[str] = None
+    seed_frame: Optional[str] = None          # landscape pre-snap JPG for manual seeding
+    seed_frame_size: Optional[list[int]] = None
+    seed_frame_t: Optional[float] = None

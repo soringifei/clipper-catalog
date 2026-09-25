@@ -548,7 +548,26 @@ def render_clip(cand: Candidate, info: VideoInfo, trajectory: PlayerTrajectory,
         ov.composite(thumb, layer)
     import cv2
     cv2.imwrite(str(out_jpg), thumb, [cv2.IMWRITE_JPEG_QUALITY, 90])
+    # ---- landscape pre-snap seed frame (review page: exact manual #52 seeding)
+    seed_t = max(0.0, (snap - 0.2) if snap is not None else s0)
+    seed_img = reader.at(seed_t)
+    seed_jpg = out_dir_p / f"{base}_seed.jpg"
+    cv2.imwrite(str(seed_jpg), seed_img, [cv2.IMWRITE_JPEG_QUALITY, 90])
     reader.close()
+
+    # ---- crop sidecar for QA: one entry per output frame of the real-time section
+    crop_frames = []
+    for seg in segs:
+        if seg["kind"] != "live":
+            continue
+        for k in range(seg["n"]):
+            t = seg["t0"] + k / fps
+            b = pl.at(t)
+            crop_frames.append({"t": round(t, 4), "crop": [round(v, 1) for v in path.box(t)],
+                                "player_x": None if b is None else round(float(b[0] + b[2]) / 2, 1)})
+    crop_json = out_dir_p / f"{base}.crop.json"
+    crop_json.write_text(json.dumps({"mode": path.mode, "safe_region": path.safe_region,
+                                     "frame_size": [src_w, src_h], "frames": crop_frames}))
 
     duration = plan["duration"]
     # ---- optional licensed music version (base file stays clean)
@@ -579,7 +598,9 @@ def render_clip(cand: Candidate, info: VideoInfo, trajectory: PlayerTrajectory,
             "music_file": str(music_out) if music_out else None,
             "crop_mode": path.mode, "crop_quality": round(path.quality, 3),
             "review_reasons": list(path.review_reasons),
-            "timeline_file": str(out_dir_p / f"{base}.timeline.json")}
+            "timeline_file": str(out_dir_p / f"{base}.timeline.json"),
+            "crop_file": str(crop_json), "seed_frame": str(seed_jpg),
+            "seed_frame_size": [int(src_w), int(src_h)], "seed_frame_t": round(seed_t, 3)}
 
 
 # ============================================================ render_debug
