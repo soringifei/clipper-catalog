@@ -89,6 +89,18 @@ def main(argv: list[str] | None = None) -> int:
     return 0
 
 
+def _desktop():
+    """The user's Desktop, incl. Windows OneDrive-redirected Desktops."""
+    import os
+    from pathlib import Path
+    home = Path.home()
+    for c in (Path(os.environ["OneDrive"]) / "Desktop" if os.environ.get("OneDrive") else None,
+              home / "Desktop", home / "OneDrive" / "Desktop"):
+        if c is not None and c.is_dir():
+            return c
+    return home / "Desktop"
+
+
 def export_outputs(store, dest: str | None = None) -> str:
     """Copy finished videos, thumbnails and manifests to a local folder.
 
@@ -97,7 +109,7 @@ def export_outputs(store, dest: str | None = None) -> str:
     """
     import shutil
     from pathlib import Path
-    out = Path(dest or Path.home() / "Desktop" / "Rebels52_highlights").expanduser()
+    out = Path(dest).expanduser() if dest else _desktop() / "Rebels52_highlights"
     for sub in ("approved", "single_plays", "candidates", "mixes", "manifests", "gym"):
         src = store.outputs / sub
         if not src.exists():
