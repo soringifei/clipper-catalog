@@ -202,3 +202,4 @@ class Candidate(_Serializable):
     output_file: Optional[str] = None
     thumbnail_file: Optional[str] = None
     replay_segments: list[dict[str, float]] = field(default_factory=list)
+    canonical_play_id: Optional[str] = None

@@ -206,23 +206,41 @@ def _estimate_los(boxes: list[list[float]], field: dict, fc: dict,
               for b in boxes]
     bw = max(float(np.median(widths)), 1e-3)
     u = uv[:, 0]
-    grid = np.linspace(u.min() - bw, u.max() + bw, 256)
-    dens = np.exp(-0.5 * ((grid[:, None] - u[None, :]) / bw) ** 2).sum(axis=1)
-    peak = float(grid[int(np.argmax(dens))])
-    in_cl = np.abs(u - peak) <= 2.5 * bw
-    cu = np.sort(u[in_cl])
-    n_cl = len(cu)
+    order = np.argsort(u)
+    su = u[order]
+    win = float(fc.get("los_side_window_bw", 3.0)) * bw
+    max_gap = float(fc.get("los_max_gap_bw", 8.0)) * bw
+    # neutral zone = the gap between two dense facing groups (the lines)
+    best: Optional[tuple[float, int, int, int]] = None
+    for i in range(len(su) - 1):
+        g = su[i + 1] - su[i]
+        if g <= 0.5 * bw or g > max_gap:
+            continue
+        left = int(np.count_nonzero((u >= su[i] - win) & (u <= su[i])))
+        right = int(np.count_nonzero((u >= su[i + 1]) & (u <= su[i + 1] + win)))
+        if left < 2 or right < 2:
+            continue
+        score = min(left, right) * min(g / bw, 4.0)
+        if best is None or score > best[0]:
+            best = (score, i, left, right)
+    if best is not None:
+        _, i, left, right = best
+        los_u = float((su[i] + su[i + 1]) / 2.0)
+        in_cl = (u >= su[i] - win) & (u <= su[i + 1] + win)
+        g = su[i + 1] - su[i]
+        side_l = np.sort(u[(u >= su[i] - win) & (u <= su[i])])
+        side_r = np.sort(u[(u >= su[i + 1]) & (u <= su[i + 1] + win)])
+        # a real line is tight along the axis; scattered players are not
+        ref = float(np.mean([np.std(side_l), np.std(side_r)]))
+        sep = float(g / max(ref, 0.25 * bw))
+        min_side = min(left, right)
+    else:  # no clear gap: densest cluster only, low confidence
+        grid = np.linspace(u.min() - bw, u.max() + bw, 256)
+        dens = np.exp(-0.5 * ((grid[:, None] - u[None, :]) / bw) ** 2).sum(axis=1)
+        los_u, sep, min_side = float(grid[int(np.argmax(dens))]), 0.0, 0
+        in_cl = np.abs(u - los_u) <= win
+    n_cl = int(np.count_nonzero(in_cl))
     density = n_cl / len(u)
-    los_u, sep = peak, 0.0
-    if n_cl >= 4:
-        gaps = np.diff(cu)
-        cand = [(gaps[i], i) for i in range(1, len(gaps) - 1)]  # >= 2 players each side
-        if cand:
-            g, i = max(cand)
-            others = np.delete(gaps, i)
-            ref = float(np.median(others)) if len(others) else bw
-            sep = float(g / max(ref, 0.25 * bw))
-            los_u = float((cu[i] + cu[i + 1]) / 2.0)
     # linemen form a line across the field: elongated cluster supports the LOS
     # (measured in image space along the axis / along the yard-line direction)
     ax, ay = field.get("field_axis") or [1.0, 0.0]
@@ -233,7 +251,8 @@ def _estimate_los(boxes: list[list[float]], field: dict, fc: dict,
     sep_s = min(1.0, max(0.0, (sep - 1.2) / 2.8))        # 1.2 -> 0, 4 -> 1
     elong_s = min(1.0, max(0.0, (elong - 0.8) / 2.2))   # 0.8 -> 0, 3 -> 1
     dens_s = min(1.0, max(0.0, (density - 0.2) / 0.4))  # 20% -> 0, 60% -> 1
-    conf = (0.45 * sep_s + 0.25 * elong_s + 0.30 * dens_s) * line_factor
+    side_s = min(1.0, max(0.0, (min_side - 2) / 3.0))   # 2 -> 0, 5 per side -> 1
+    conf = (0.35 * sep_s + 0.20 * elong_s + 0.20 * dens_s + 0.25 * side_s) * line_factor
     v_c = float(np.median(uv[in_cl, 1])) if n_cl else float(np.median(uv[:, 1]))
     px, py = _from_field(los_u, v_c, field)
     th = math.radians(field.get("line_angle_deg") if field.get("line_angle_deg") is not None
@@ -243,7 +262,7 @@ def _estimate_los(boxes: list[list[float]], field: dict, fc: dict,
             "line": [[px - half * math.cos(th), py - half * math.sin(th)],
                      [px + half * math.cos(th), py + half * math.sin(th)]],
             "features": {"separation": sep, "elongation": elong, "density": density,
-                         "cluster_size": n_cl}}
+                         "cluster_size": n_cl, "min_side": min_side}}
 
 
 def estimate_field(frame_bgr: Optional[np.ndarray], tracks_at_snap: Optional[list[list[float]]],
