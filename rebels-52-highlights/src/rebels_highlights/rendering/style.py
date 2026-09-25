@@ -699,4 +699,10 @@ def text_zone(occupied: Sequence[tuple[float, float]], H: int = 1920, text_h: fl
         d = min((max(o0 - b, a - o1) for o0, o1 in occupied), default=1e9)
         if d >= gap and d > best_d:
             best, best_d = yc, d
+    if best is None:  # no preset band is free: scan the whole safe area
+        for yc in np.arange(0.12 * H + text_h / 2, 0.82 * H - text_h / 2 + 1, 8.0):
+            a, b = yc - text_h / 2, yc + text_h / 2
+            d = min((max(o0 - b, a - o1) for o0, o1 in occupied), default=1e9)
+            if d >= gap and d > best_d:
+                best, best_d = float(yc), d
     return best

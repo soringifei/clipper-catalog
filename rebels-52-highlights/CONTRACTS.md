@@ -58,8 +58,16 @@ rendering/render.py
 rendering/mix.py
   build_mix(clips: list[Candidate], cfg, out_dir: str, duration_s: int, version: int = 1) -> dict | None
       # {"output_file", "clip_ids", "duration_s"} or None if not enough good clips
+  # render.style: epic (default, rendering/epic.py) | clean (legacy look); both write the same outputs
+rendering/style.py  (shared visual engine for football + gym renderers; numpy/OpenCV/PIL only)
+  get_style(cfg) -> Style; font(role, size); Grader(style)(frame, k, mono=0..1)
+  spotlight(...), impact_fx(frame, k_since_impact, style, center), TextSprite / blit / Slam,
+  light_streak(...), RampMap(s_a, s_b, holds, vmin, ease, fps), text_zone(occupied, H, text_h)
 audio/audio.py
   audio_filter_graph(has_music: bool, cfg) -> str        # loudnorm + sidechain ducking
+  sfx(name, cfg) -> np.ndarray   # synthesized boom/whoosh/subdrop/riser/rewind, cached cache/sfx/*.wav
+  detect_beats(path|array) -> (beats_s, bpm); snap_to_beat(t, beats, tol=0.12)
+  decode_audio / varispeed / lowpass_fft / duck_gain / place / write_wav  (numpy mixing)
 
 manifests/manifest.py
   write_manifests(cands: list[Candidate], store) -> dict  # highlights.json + highlights.csv
