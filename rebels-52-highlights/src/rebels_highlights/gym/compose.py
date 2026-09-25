@@ -106,7 +106,7 @@ def build_mix(results: list[dict], cfg: dict, duration_s: int, max_clips: Option
         ex = r["exercise"]
         labels.append(ex["label"] if ex.get("label_shown") else "TRAINING")
 
-    grade = S.Grade(W, H, grain=5.0)
+    grade = S.make_grade(W, H, cfg["style"])
 
     def intro(ph):
         f = _dark_canvas(W, H)
@@ -143,8 +143,8 @@ def build_mix(results: list[dict], cfg: dict, duration_s: int, max_clips: Option
             if a > 0:
                 bx = S.blit(f, S.type_sprite(val, int(118 * u), (255, 255, 255), "display", 0.0, 0.2, accent),
                             90 * u - sl * 60 * u, y, a, "lt", sc)
-                T(f, lab, 96 * u, y + bx[3] * 0.86, 30 * u, (175, 175, 175), alpha=a, tracking=0.12)
-            y += 196 * u
+                T(f, lab, 96 * u, y + bx[3] * 0.80, 30 * u, (175, 175, 175), alpha=a, tracking=0.12)
+            y += 222 * u
         e = S.ease_out_cubic(t * 2)
         T(f, "ESTIMATES FROM 2D PHONE VIDEO", 90 * u, H - 330 * u, 24 * u, (140, 140, 140), alpha=e, tracking=0.2)
         T(f, cfg["athlete"]["tag"], 90 * u, H - 290 * u, 46 * u, alpha=e, tracking=0.08)
@@ -247,7 +247,7 @@ def side_by_side(a_path: Path, b_path: Optional[Path], cfg: dict, exercise: Opti
     n2 = int(dur * ofps / cfg["edit"]["slowmo_speed"])
     accent = hex_to_bgr(cfg["style"]["accent"])
     # comparison chart of the primary signal (time since window start)
-    cx0, cy0, cw, chh = int(60 * u), int(250 * u + ph + 30 * u), int(960 * u), int(250 * u)
+    cx0, cy0, cw, chh = int(60 * u), int(270 * u + ph + 30 * u), int(960 * u), int(230 * u)
     curves = []
     for sd in sides:
         v = sd["an"].primary[sd["s"]:sd["e"]]
@@ -277,7 +277,7 @@ def side_by_side(a_path: Path, b_path: Optional[Path], cfg: dict, exercise: Opti
     # header + table
     T(base, cfg["athlete"]["tag"], 56 * u, 70 * u, 34 * u, tracking=0.08)
     cv2.line(base, (int(60 * u), int(128 * u)), (int(120 * u), int(128 * u)), accent, max(2, int(4 * u)), cv2.LINE_AA)
-    T(base, title, 56 * u, 140 * u, 84 * u, glow=0.25, accent=accent, tracking=0.01)
+    T(base, title, 56 * u, 150 * u, 60 * u, glow=0.25, accent=accent, tracking=0.02)
     ty = cy0 + chh + 24 * u
 
     def rep_val(sd, key):
@@ -287,7 +287,7 @@ def side_by_side(a_path: Path, b_path: Optional[Path], cfg: dict, exercise: Opti
         if key == "rom":
             return f"{r.rom_deg:.0f}°"
         if key == "tempo":
-            return f"↓{r.ecc_s:.1f} ↑{r.con_s:.1f}s"
+            return f"{r.ecc_s:.1f}S / {r.con_s:.1f}S"
         if key == "speed":
             v = r.extra.get("bar_peak_up_speed")
             return f"{v:.2f} m/s" if v is not None and sd["an"].extras.get("speed_unit") == "m/s" else "—"
@@ -299,7 +299,7 @@ def side_by_side(a_path: Path, b_path: Optional[Path], cfg: dict, exercise: Opti
 
     first_arc = an_a.profile.arcs[0] if an_a.profile.arcs else "joint"
     for key, lab in (("rom", "ROM"), ("turn", f"{JOINT_LABEL.get(first_arc, first_arc.upper())} AT TURN"),
-                     ("tempo", "TEMPO"), ("speed", "PEAK BAR SPEED EST.")):
+                     ("tempo", "TEMPO DOWN / UP"), ("speed", "PEAK BAR SPEED EST.")):
         T(base, rep_val(sides[0], key), 80 * u, ty, 50 * u)
         T(base, lab, W / 2, ty + 12 * u, 26 * u, (160, 160, 160), anchor="ct", tracking=0.15)
         T(base, rep_val(sides[1], key), W - 80 * u, ty, 50 * u, accent, anchor="rt")
@@ -331,15 +331,15 @@ def side_by_side(a_path: Path, b_path: Optional[Path], cfg: dict, exercise: Opti
                     panel = comp.base(img, f)
                     comp.overlays(panel, f, of)
                     x0 = j * pw
-                    fr[int(250 * u):int(250 * u) + ph, x0:x0 + pw] = panel
-                    T(fr, lab_a if j == 0 else lab_b, x0 + 24 * u, 262 * u, 54 * u,
+                    fr[int(270 * u):int(270 * u) + ph, x0:x0 + pw] = panel
+                    T(fr, lab_a if j == 0 else lab_b, x0 + 24 * u, 282 * u, 54 * u,
                       (255, 255, 255) if j == 0 else accent, glow=0.3, accent=accent)
                     px, py = cpt(t, sd["an"].primary[f]) if f < sd["an"].seq.T else (None, None)
                     if px is not None and not np.isnan(py):
                         cv2.circle(fr, (int(px), int(py)), int(8 * u), D.WHITE if j == 0 else accent, -1, cv2.LINE_AA)
                 xx = cpt(t, lo)[0]
                 cv2.line(fr, (int(xx), int(cy0 + 34 * u)), (int(xx), int(cy0 + chh - pad)), (150, 150, 150), 1)
-                cv2.line(fr, (pw, int(250 * u)), (pw, int(250 * u) + ph), accent, max(2, int(4 * u)))
+                cv2.line(fr, (pw, int(270 * u)), (pw, int(270 * u) + ph), accent, max(2, int(4 * u)))
                 if speed < 1:
                     T(fr, f"{speed:g}X SLOW", W - 56 * u, 80 * u, 40 * u, accent, anchor="rt", tracking=0.1)
                 wr.write(fr)

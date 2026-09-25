@@ -643,8 +643,7 @@ class Composer:
         self.trail_n = int(st["trail_s"] * an.fps)
         self.header = header
         self.panel = panel          # rep counter + kinetic pops
-        self.grade = S.Grade(self.W, self.H, st.get("contrast", 0.55), st.get("saturation", 0.88),
-                             st.get("vignette", 0.42), st.get("grain", 5.0)) if grade else None
+        self.grade = S.make_grade(self.W, self.H, st) if grade else None
         a, b = plan.body
         self.spark = None
         if sparkline and cfg["edit"]["sparkline"] and b - a > 5:
@@ -672,16 +671,21 @@ class Composer:
         if c.mode == "crop":
             out = self._crop_resize(img, ox * ds, oy * ds, c.win_w * ds, c.win_h * ds)
         else:
+            x, y, w, h = c.fg
             s = c.scale / ds
-            M = np.float32([[s, 0, -ox * ds * s + c.fg[0]], [0, s, -oy * ds * s + c.fg[1]]])
+            M = np.float32([[s, 0, -ox * ds * s], [0, s, -oy * ds * s]])
             out = D.blur_background(img, self.W, self.H, 0.35)
-            fg = cv2.warpAffine(img, M, (self.W, self.H), flags=cv2.INTER_LINEAR, borderMode=cv2.BORDER_CONSTANT)
-            if not hasattr(self, "_fg_mask"):
-                x, y, w, h = c.fg
-                m = np.zeros((self.H, self.W), np.float32)
-                m[y + 6:y + h - 6, x:x + w] = 1
-                self._fg_mask = cv2.GaussianBlur(m, (0, 0), 14 * self.u)[..., None]
-            out = (out * (1 - self._fg_mask) + fg * self._fg_mask).astype(np.uint8)
+            fg = cv2.warpAffine(img, M, (w, h), flags=cv2.INTER_LINEAR, borderMode=cv2.BORDER_REPLICATE)
+            if not hasattr(self, "_fg_w"):
+                feather = max(4, int(28 * self.u))
+                ramp = np.ones(h, np.float32)
+                e = np.linspace(0, 1, feather, dtype=np.float32)
+                ramp[:feather] = e
+                ramp[-feather:] = e[::-1]
+                self._fg_w = np.ascontiguousarray(np.repeat(ramp[:, None], w, 1))
+                self._bg_w = np.ascontiguousarray(1 - self._fg_w)
+            roi = out[y:y + h, x:x + w]
+            out[y:y + h, x:x + w] = cv2.blendLinear(fg, roi, self._fg_w, self._bg_w)
         z = 1.0
         if of is not None and of.mode == "ramp":
             z = 1.0 + self.cfg["edit"]["ramp_zoom"] * S.ease_out_cubic(of.phase)
@@ -751,8 +755,9 @@ class Composer:
             if np.isnan(v):
                 continue
             lo, hi = an.arc_ranges.get(j, (0, 180))
-            draw_arc_glow(out, a_, b_, c_, v, (hi - v) / max(hi - lo, 1), self.arc_r, sc,
-                          emph if j == an.profile.arcs[0] else emph * 0.5)
+            prim = j == an.profile.arcs[0]
+            draw_arc_glow(out, a_, b_, c_, v, (hi - v) / max(hi - lo, 1), self.arc_r * (1 if prim else 0.8), sc,
+                          emph if prim else emph * 0.5, small=not prim)
         u = self.u
         if self.header:
             S.blit(out, S.type_sprite(self.cfg["athlete"]["tag"], int(34 * u), (255, 255, 255), "display", 0.08,
@@ -805,11 +810,7 @@ class Composer:
                  else np.zeros((self.H, self.W, 3), np.uint8))
             self._bg = self.grade.apply(b, grain=False) if self.grade is not None else b
         out = self._bg.copy()
-        if self.grade is not None and self.grade.grain:
-            self.grade.k = (self.grade.k + 1) % len(self.grade.grain)
-            pos, neg = self.grade.grain[self.grade.k]
-            out = cv2.subtract(cv2.add(out, pos), neg)
-        return out
+        return self.grade.add_grain(out) if self.grade is not None else out
 
     def intro(self, bg: Optional[np.ndarray], of: OutFrame) -> np.ndarray:
         out = self._card_bg(bg, 0.55)
@@ -843,18 +844,18 @@ class Composer:
         u = self.u
         rows = summary_rows(self.an)
         t = of.phase * self.cfg["edit"]["outro_s"]
-        y = self.H * 0.15
+        y = self.H * 0.12
         S.blit(out, S.type_sprite("SESSION", int(34 * u), self.accent, "display", 0.3), 90 * u, y,
                S.ease_out_cubic(t * 4))
         y += 60 * u
-        for i, (lab, val) in enumerate(rows[:6]):
+        for i, (lab, val) in enumerate(rows[:5]):
             a, s, sl = S.kinetic_alpha_scale(t - 0.12 - 0.13 * i, 100)
             if a > 0:
                 vs = S.type_sprite(val, int(118 * u), (255, 255, 255), "display", 0.0, 0.2, self.accent)
                 bx = S.blit(out, vs, 90 * u - sl * 60 * u, y, a, "lt", s)
                 S.blit(out, S.type_sprite(lab, int(30 * u), (175, 175, 175), "display", 0.12), 96 * u,
-                       y + bx[3] * 0.86, a)
-            y += 196 * u
+                       y + bx[3] * 0.80, a)
+            y += 222 * u
         e = S.ease_out_cubic(t * 2)
         S.blit(out, S.type_sprite("ESTIMATES FROM 2D PHONE VIDEO", int(24 * u), (140, 140, 140), "display", 0.2),
                90 * u, self.H - 330 * u, e)

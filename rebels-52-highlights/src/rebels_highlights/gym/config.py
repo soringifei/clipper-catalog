@@ -29,7 +29,8 @@ DEFAULTS: dict[str, Any] = {
               "font": "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf",
               "font_regular": "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",
               "skeleton_color": "#FFFFFF", "trail_s": 1.6,
-              "contrast": 0.55, "saturation": 0.88, "vignette": 0.42, "grain": 5.0},
+              "contrast": 0.55, "saturation": 0.88, "vignette": 0.42, "grain": 5.0,
+              "engine": "auto"},
     "mix": {"max_clips": 6, "per_clip_max_s": 12},
     "exercise_overrides": {},
 }

@@ -122,10 +122,15 @@ def analyze(seq: PoseSeq, cfg: dict, exercise: Optional[str] = None, source: str
     auto_key, auto_conf, scores = classify(seq, ang)
     feats = scores.pop("_features", {})
     key = normalize_name(exercise)
+    auto_guess = None
     if key:
         conf = 1.0
     else:
         key, conf, source = auto_key, auto_conf, "auto"
+        if conf < cfg["edit"]["label_min_confidence"]:
+            # not sure what this is: neutral look, no exercise-specific claims
+            auto_guess = {"key": key, "confidence": conf}
+            key = "generic"
     prof = PROFILES[key]
     label_visible = conf >= cfg["edit"]["label_min_confidence"] and key != "generic"
     side = M.near_side(seq)
@@ -269,6 +274,8 @@ def analyze(seq: PoseSeq, cfg: dict, exercise: Optional[str] = None, source: str
                   bar_vy=vy, m_per_px=m_per_px, body_px=body_px, arc_ranges=arc_ranges,
                   scores=scores)
     an.extras["speed_unit"] = speed_unit
+    if auto_guess:
+        an.extras["auto_guess_low_confidence"] = auto_guess
     an.extras["features"] = {k: (round(v, 3) if isinstance(v, float) and not np.isnan(v) else None)
                              for k, v in feats.items()}
     _sport_extras(an)

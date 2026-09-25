@@ -41,6 +41,7 @@ from . import style as S
 from .crop import OUT_H, OUT_W, CropPath, Xform, compose_frame, compute_crop_path, letterbox_frame, max_zoom
 
 BEAT_TOL = 0.12
+FREEZE_BEAT_TOL = 0.26
 CONTACT_TYPES = ("tackle", "sack", "stop", "fumble", "pressure", "shed")
 
 
@@ -190,7 +191,10 @@ def plan_epic(cand: Candidate, event: Any, cfg: dict, video_dur: float, zoom: fl
             segs = build(p)
             seg = next(s for s in segs if s["kind"] == kind)
             end = seg["out_end"]
-            tgt = au.snap_to_beat(end, beats, BEAT_TOL)
+            # action-tied cuts move <= 120 ms; freeze cards (no natural moment) may
+            # stretch up to ~half a beat so the cut still lands on the grid
+            tol = BEAT_TOL if kind in ("coldopen", "live", "replay") else FREEZE_BEAT_TOL
+            tgt = au.snap_to_beat(end, beats, tol)
             d = tgt - end
             if abs(d) < 0.5 / fps:
                 continue
@@ -338,7 +342,7 @@ class EpicClip:
         it = segs["intro"]
         occ = self.occupied(np.array([it["t0"]]), 1.05, contact=False)
         num = S.TextSprite(self.num, "display", 400)
-        sub = S.TextSprite(f"{self.pos}  •  {self.team}", "text", 40, tracking=0.28, weight="Medium",
+        sub = S.TextSprite(f"{self.pos}  •  {self.team}", "text", 46, tracking=0.28, weight="Medium",
                            fill=(235, 235, 235))
         nm = S.TextSprite(self.name, "title", 96) if self.name else None
         stack_h = num.text_h + 30 + sub.text_h + (nm.text_h + 18 if nm else 0)
@@ -360,15 +364,20 @@ class EpicClip:
             o0 = lv["out_start"]
             I, snap = self.impact, plan["snap"]
             words: list[tuple[str, float, float]] = []    # (text, out_in, out_out)
+            close = None
+            if snap is not None and I - snap >= 1.5 and self._moved(snap, I):
+                a = o0 + float(ramp.out(max(snap + 0.75, I - 1.6)))
+                b = min(a + 1.1, o0 + float(ramp.out(I - 0.3)))
+                if b - a >= 0.35:
+                    close = ("CLOSE.", a, b)
             if snap is not None and I - snap >= 0.9:
                 a = o0 + float(ramp.out(snap)) + 0.02
-                words.append(("READ.", a, min(a + 0.7, o0 + float(ramp.out(I - 0.55)))))
-            if snap is not None and I - snap >= 1.5 and self._moved(snap, I):
-                ts = snap + 0.55
-                a = o0 + float(ramp.out(ts))
-                b = o0 + float(ramp.out(I - 0.3))
-                if b - a >= 0.35:
-                    words.append(("CLOSE.", a, b))
+                b = min(a + 0.75, o0 + float(ramp.out(I - 0.55)))
+                if close:
+                    b = min(b, close[1] - 0.16)
+                words.append(("READ.", a, b))
+            if close:
+                words.append(close)
             post_end = lv["out_end"] - 0.05
             if self.has_contact:
                 a = o0 + float(ramp.out(I + 0.03))
@@ -378,7 +387,7 @@ class EpicClip:
                 a = snap_b(a)
                 if b - a < 0.3:
                     continue
-                spr = S.TextSprite(txt, "display", 150)
+                spr = S.TextSprite(txt, "display", 190)
                 win = ramp.src(np.linspace(a - o0, b - o0, 6))
                 yc = S.text_zone(self.occupied(win), OUT_H, spr.text_h + 30)
                 if yc is None:
@@ -460,7 +469,7 @@ class EpicClip:
     def streak(self, frame: np.ndarray, xf: Xform, t: float, alpha: float) -> None:
         if alpha <= 0.02 or not self.pl.ok:
             return
-        ts = np.arange(t - 0.75, t - 0.04, 1 / 30)
+        ts = np.arange(t - 1.0, t - 0.04, 1 / 30)
         pts = []
         for tt in ts:
             b = self.pl.at(float(tt), hold=0.0)
@@ -469,7 +478,7 @@ class EpicClip:
         if len(pts) >= 4:
             b = self.pl.at(t)
             bw = (xf.box(b)[2] - xf.box(b)[0]) if b is not None else 90
-            S.light_streak(frame, pts, self.accent_bgr, float(np.clip(bw * 0.3, 14, 44)), alpha)
+            S.light_streak(frame, pts, self.accent_bgr, float(np.clip(bw * 0.45, 18, 56)), alpha)
 
     def render_frames(self, writer) -> None:
         plan, fps, st = self.plan, self.fps, self.st
@@ -539,8 +548,7 @@ class EpicClip:
                 elif kind == "title":
                     frame = self.grade(plate.copy(), mono=0.6)
                 elif kind == "rewind":
-                    frame = self.grade(rew[k].copy(), mono=0.75)
-                    frame = cv2.convertScaleAbs(frame, alpha=0.8)
+                    frame = self.grade(rew[k].copy(), mono=0.55)
                 elif kind == "intro":
                     t = seg["t0"]
                     z = 1.0 + (min(1.05, self.fx_zoom) - 1.0) * S.ease_in_out(k / max(1, n - 1))
@@ -586,7 +594,7 @@ class EpicClip:
                     frame, xf = self.compose(t, z)
                     mono = S.ease_in_out(k / 7)
                     frame = self.grade(frame, mono=mono)
-                    frame = cv2.convertScaleAbs(frame, alpha=1.0 - 0.3 * mono)
+                    frame = cv2.convertScaleAbs(frame, alpha=1.0 - 0.22 * mono)
                     if k < 2:
                         frame = S.flash(frame, (0.3, 0.12)[k])
                 if frame is None:
@@ -705,6 +713,44 @@ class EpicClip:
         return np.clip(out, -1.0, 1.0)
 
 
+class _ThreadedPipe:
+    """Writes frames to a pipe from a worker thread (bounded queue)."""
+
+    def __init__(self, stream, depth: int = 6):
+        import queue
+        import threading
+        self.q: "queue.Queue" = queue.Queue(maxsize=depth)
+        self.stream, self.err = stream, None
+        self.th = threading.Thread(target=self._run, daemon=True)
+
+    def _run(self):
+        while True:
+            b = self.q.get()
+            if b is None:
+                return
+            if self.err is None:
+                try:
+                    self.stream.write(b)
+                except BaseException as e:  # noqa: BLE001
+                    self.err = e
+
+    def put(self, frame: np.ndarray) -> None:
+        if self.err is not None:
+            raise self.err
+        self.q.put(np.ascontiguousarray(frame).tobytes())
+
+    def __enter__(self):
+        self.th.start()
+        return self
+
+    def __exit__(self, *exc):
+        self.q.put(None)
+        self.th.join()
+        if self.err is not None and exc[0] is None:
+            raise self.err
+        return False
+
+
 # ================================================================== render
 def render_epic(cand: Candidate, info: VideoInfo, trajectory: PlayerTrajectory, event: EventResult,
                 cfg: dict, out_dir: str, music_file: Optional[str] = None,
@@ -742,7 +788,8 @@ def render_epic(cand: Candidate, info: VideoInfo, trajectory: PlayerTrajectory, 
         au.write_wav(wav, clip.build_audio(), au.SAMPLE_RATE)
         proc, log = _open_writer(cmd)
         try:
-            clip.render_frames(lambda f: proc.stdin.write(np.ascontiguousarray(f).tobytes()))
+            with _ThreadedPipe(proc.stdin) as pipe:   # overlap composition with x264
+                clip.render_frames(pipe.put)
             _close_writer(proc, log)
         except BaseException:
             try:
@@ -814,10 +861,11 @@ def poster(clip: EpicClip, t: float) -> np.ndarray:
     frame = clip.grader(frame, 0, grain=True)
     frame = cv2.multiply(frame, clip.grader.vig, scale=1 / 255.0)
     occ = clip.occupied(np.array([t]), 1.0, contact=False)
-    num = S.TextSprite(clip.num, "display", 620)
+    num = S.TextSprite(clip.num, "display", 540)
     tm = S.TextSprite(clip.team, "text", 46, tracking=0.34, weight="Medium", underline=st.accent)
     h = num.text_h + 24 + tm.text_h
-    yc = S.text_zone(occ, OUT_H, h + 40, (0.7, 0.26, 0.66, 0.3)) or OUT_H * 0.7
+    yc = (S.text_zone(occ, OUT_H, h + 40, (0.7, 0.26, 0.66, 0.3, 0.74, 0.22), gap=60)
+          or S.text_zone(occ, OUT_H, h + 40, (0.7, 0.26, 0.66, 0.3, 0.74, 0.22)) or OUT_H * 0.7)
     # soft dark gradient behind the type for legibility
     g = np.clip(1 - np.abs(np.arange(OUT_H) - yc) / (h * 0.9), 0, 1) ** 1.5 * 0.45
     frame = (frame.astype(np.float32) * (1 - g)[:, None, None]).astype(np.uint8)

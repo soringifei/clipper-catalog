@@ -225,3 +225,141 @@ def test_render_debug(source, cfg, workdir):
     out = render_debug(source, play, tracking, identity, ev, cfg, str(workdir / "dbg" / "d.mp4"))
     pi = probe(out)
     assert (pi["width"], pi["height"]) == (W, H) and pi["duration"] > 1.0
+
+
+# ------------------------------------------------------------------ epic style engine
+def test_style_switch(cfg):
+    from rebels_highlights.rendering.style import get_style
+    assert get_style(cfg).name == "epic" and get_style(cfg).epic
+    assert get_style({"render": {"style": "clean"}}).name == "clean"
+    assert get_style({"render": {"style": "nonsense"}}).name == "epic"
+    st = get_style({"render": {"epic": {"grade": 0.5, "ramp_speed": 0.33}}})
+    assert st.grade == 0.5 and st.ramp_speed == 0.33
+
+
+def test_clean_style_render(source, workdir):
+    import json
+    cfg_c = load_config(overrides={"render": {"preset": "ultrafast", "crf": 30, "style": "clean"}})
+    cand, info, traj, ev = make_case(source, 11, "solo_tackle", "defense", "B", 0.6)
+    res = render_clip(cand, info, traj, ev, cfg_c, str(workdir / "clean"))
+    assert res["style"] == "clean"
+    tl = json.loads(Path(res["timeline_file"]).read_text())
+    assert [s["kind"] for s in tl["segments"]][:2] == ["ident", "live"]
+    assert 15.0 <= probe(res["output_file"])["duration"] <= 60.0
+
+
+def test_epic_timeline(rendered):
+    import json
+    cand, res, _ = rendered[0]
+    assert res["style"] == "epic"
+    tl = json.loads(Path(res["timeline_file"]).read_text())
+    kinds = [s["kind"] for s in tl["segments"]]
+    assert kinds[:6] == ["coldopen", "flash", "title", "rewind", "intro", "live"]
+    assert "replay" in kinds and kinds[-1] == "endcard"
+    assert "REPLAY" not in json.dumps(tl)
+    co = tl["segments"][0]
+    assert 0.6 <= co["end"] - co["start"] <= 1.0
+    # hook: first impact inside the first second, then live + replay impacts
+    assert tl["impacts_out"][0] < 1.0 and len(tl["impacts_out"]) >= 3
+    ec = tl["segments"][-1]
+    assert 1.5 <= ec["end"] - ec["start"] <= 2.7
+    assert 15.0 <= tl["duration"] <= 60.0
+    # text never sits on the impact moment of the live play... except the
+    # post-contact word, which is placed in a band away from the contact
+    assert any(t["text"] == "title" for t in tl["text"])
+    names = {s["name"] for s in tl["sfx"]}
+    assert {"boom", "whoosh", "subdrop", "riser"} <= names
+
+
+def test_caption_label_only_from_caption(source, cfg):
+    from rebels_highlights.rendering.epic import EpicClip, caption_label
+    assert caption_label("#52 | MLB | BUCHAREST REBELS") is None
+    assert caption_label("#52 | MLB | BUCHAREST REBELS — SACK") == "SACK"
+    from rebels_highlights.rendering.style import get_style
+    cand, info, traj, ev = make_case(source, 12, "sack", "defense", "S", 0.9)
+    cand.caption = "#52 | MLB | BUCHAREST REBELS"          # no label -> no label slam
+    clip = EpicClip(cand, info, traj, ev, cfg, get_style(cfg), None)
+    tags = [s.tag for s in clip.build_text()]
+    clip.reader.close()
+    assert "label" not in tags and "title" in tags and "end" in tags
+    # unknown player name is never drawn
+    assert clip.name is None
+
+
+def test_speed_ramp_monotonic():
+    from rebels_highlights.rendering.style import RampMap
+    r = RampMap(10.0, 16.0, [(13.0, 13.3)], vmin=0.3, ease=0.35, fps=30)
+    fr = r.frames()
+    assert np.all(np.diff(fr) > 0)                      # strictly monotonic source time
+    assert fr[0] == pytest.approx(10.0) and fr[-1] <= 16.0
+    sp = np.diff(fr) * 30
+    assert sp.min() == pytest.approx(0.3, abs=0.02)     # floor reached around contact
+    assert sp[:30].min() > 0.99 and sp[-10:].min() > 0.99  # 1x before/after
+    hold_out = r.out(13.3) - r.out(13.0)
+    assert 0.8 <= hold_out <= 1.2                       # ~1 s of slow motion
+    assert r.duration > 6.0 and r.n == round(r.duration * 30)
+    # out/src are inverse maps
+    assert r.src(r.out(14.2)) == pytest.approx(14.2, abs=1e-3)
+
+
+def test_sfx_generation(tmp_path):
+    from rebels_highlights.audio import audio as au
+    cfg_t = {"root": str(tmp_path), "paths": {"cache": "cache"}}
+    for name in au.SFX_NAMES:
+        x = au.sfx(name, cfg_t)
+        assert x.ndim == 2 and x.shape[1] == 2 and len(x) > 1000
+        assert 0.5 < np.abs(x).max() <= 0.91 and np.all(np.isfinite(x))
+    files = sorted(p.name for p in (tmp_path / "cache" / "sfx").glob("*.wav"))
+    assert len(files) == len(au.SFX_NAMES)
+    boom = au.synth_sfx("boom")[:, 0]
+    spec = np.abs(np.fft.rfft(boom))
+    f = np.fft.rfftfreq(len(boom), 1 / au.SAMPLE_RATE)
+    assert 25 <= f[np.argmax(spec)] <= 90                # deep boom
+    x2, sr = au.read_wav(tmp_path / "cache" / "sfx" / files[0])
+    assert sr == au.SAMPLE_RATE
+
+
+def test_beat_detection_and_snapping():
+    from rebels_highlights.audio.audio import detect_beats, snap_to_beat, tile_beats
+    sr, bpm, off = 22050, 124.0, 0.21
+    x = np.zeros(sr * 16, np.float32)
+    rng = np.random.default_rng(0)
+    P = 60 / bpm
+    for k in range(int(16 / P)):
+        i = int((off + k * P) * sr)
+        x[i:i + 400] += np.hanning(400) * rng.normal(0, 1, 400)
+    beats, est = detect_beats(x, sr)
+    assert abs(est - bpm) / bpm < 0.03
+    err = [min(abs(b - (off + k * P)) for k in range(int(16 / P))) for b in beats[2:-2]]
+    assert np.median(err) < 0.03
+    assert snap_to_beat(beats[5] + 0.08, beats) == beats[5]
+    assert snap_to_beat(beats[5] + 0.2, beats, 0.12) == beats[5] + 0.2
+    assert tile_beats([0.1, 0.6], 1.0, 3.0)[:4] == [0.1, 0.6, 1.1, 1.6]
+
+
+def test_plan_snaps_cuts_to_beats(source, cfg):
+    from rebels_highlights.rendering.epic import plan_epic
+    cand, info, traj, ev = make_case(source, 13, "sack", "defense", "S", 0.9)
+    beats = list(np.arange(0.03, 60, 0.5))                # 120 BPM grid, off the nominal cuts
+    plain = plan_epic(cand, ev, cfg, DUR)
+    snapped = plan_epic(cand, ev, cfg, DUR, beats=beats)
+    assert len(snapped["beat_snapped"]) >= 3
+    seg = {s["kind"]: s for s in snapped["segments"]}
+    pseg = {s["kind"]: s for s in plain["segments"]}
+    for k in snapped["beat_snapped"]:
+        e = seg[k]["out_end"]
+        assert min(abs(b - e) for b in beats) <= 1 / 30 + 1e-6, k
+        assert abs(e - pseg[k]["out_end"]) <= 0.12 + 1 / 30 + 0.5  # small nudges only (cumulative)
+    assert 15.0 <= snapped["duration"] <= 60.0 and 15.0 <= plain["duration"] <= 60.0
+
+
+def test_mix_align_to_beats():
+    from rebels_highlights.rendering.mix import align_to_beats
+    pieces = [(0.0, 5.0, 0), (2.0, 7.93, 1), (1.0, 6.0, 2)]
+    beats = list(np.arange(0.0, 30, 0.5))
+    out = align_to_beats(pieces, beats, 30)
+    t = 0.0
+    for i, (a, b, ci) in enumerate(out[:-1]):
+        t += b - a
+        assert min(abs(t - x) for x in beats) < 1 / 30 + 1e-6
+    assert out[-1] == pieces[-1]

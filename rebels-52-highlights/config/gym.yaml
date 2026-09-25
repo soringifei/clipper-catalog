@@ -60,7 +60,8 @@ style:
   contrast: 0.55                # S-curve strength
   saturation: 0.88
   vignette: 0.42
-  grain: 5.0                    # film grain sigma (0 = off)
+  grain: 5.0                    # film grain sigma (0 = off) - local engine only
+  engine: auto                  # auto: shared rendering/style.py Grader if present | shared | local
 
 mix:
   max_clips: 6
