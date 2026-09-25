@@ -31,11 +31,16 @@ def _parser() -> argparse.ArgumentParser:
                        help="mix duration in seconds (repeatable)")
         s.add_argument("--export-dir", default=None,
                        help="copy final videos here (default ~/Desktop/Rebels52_highlights)")
+    from .gym.cli import add_gym_parser
+    add_gym_parser(sub)
     return p
 
 
 def main(argv: list[str] | None = None) -> int:
     args = _parser().parse_args(argv)
+    if args.cmd == "gym":
+        from .gym.cli import run_gym
+        return run_gym(args)
     logging.basicConfig(level=logging.DEBUG if args.debug else logging.INFO,
                         format="%(levelname)s %(message)s")
     overrides: dict = {}

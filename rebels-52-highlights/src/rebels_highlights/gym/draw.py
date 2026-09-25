@@ -277,16 +277,16 @@ def draw_trail(frame, pts: np.ndarray, color, scale: float):
 
 
 def blur_background(img: np.ndarray, out_w: int, out_h: int, darken: float = 0.45) -> np.ndarray:
-    """Cover-scale, heavy blur (cheap: downscale -> blur -> upscale), darken."""
+    """Cover-scale + heavy blur + darken, all done at 1/12 resolution (cheap)."""
     h, w = img.shape[:2]
     s = max(out_w / w, out_h / h)
-    nw, nh = int(math.ceil(w * s)), int(math.ceil(h * s))
-    small = cv2.resize(img, (max(1, nw // 12), max(1, nh // 12)), interpolation=cv2.INTER_AREA)
+    cw, ch = out_w / s, out_h / s
+    x0, y0 = int((w - cw) / 2), int((h - ch) / 2)
+    sub = img[y0:y0 + int(ch), x0:x0 + int(cw)]
+    small = cv2.resize(sub, (max(1, out_w // 12), max(1, out_h // 12)), interpolation=cv2.INTER_AREA)
     small = cv2.GaussianBlur(small, (0, 0), 3)
-    big = cv2.resize(small, (nw, nh), interpolation=cv2.INTER_LINEAR)
-    x0, y0 = (nw - out_w) // 2, (nh - out_h) // 2
-    out = big[y0:y0 + out_h, x0:x0 + out_w]
-    return (out.astype(np.float32) * (1 - darken)).astype(np.uint8)
+    small = cv2.convertScaleAbs(small, alpha=1 - darken)
+    return cv2.resize(small, (out_w, out_h), interpolation=cv2.INTER_LINEAR)
 
 
 class Sparkline:

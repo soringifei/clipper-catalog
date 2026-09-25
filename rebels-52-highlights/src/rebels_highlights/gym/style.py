@@ -25,7 +25,15 @@ FALLBACK_REG = "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf"
 
 @lru_cache(maxsize=1)
 def display_font_path() -> tuple[Optional[str], bool]:
-    """(path, is_condensed). Looks in assets/fonts/ (vendored Anton/Bebas), else DejaVu."""
+    """(path, is_condensed). Shared engine's display font (rendering/style.py) when present,
+    else assets/fonts/ (vendored Anton/Bebas), else DejaVu."""
+    try:
+        from ..rendering.style import font_path as _shared_font_path
+        p = _shared_font_path("display")
+        if p:
+            return p, True
+    except Exception:  # noqa: BLE001 - shared engine optional
+        pass
     for d in (PROJECT_ROOT / "assets/fonts", PROJECT_ROOT / "assets"):
         if d.is_dir():
             for name in DISPLAY_CANDIDATES:
@@ -186,6 +194,13 @@ class Grade:
         v = self.vig.astype(np.float32) * m[..., None]
         self.vig = np.clip(v, 0, 255).astype(np.uint8)
 
+    def add_grain(self, img: np.ndarray) -> np.ndarray:
+        if not self.grain:
+            return img
+        self.k = (self.k + 1) % len(self.grain)
+        pos, neg = self.grain[self.k]
+        return cv2.subtract(cv2.add(img, pos), neg)
+
     def apply(self, img: np.ndarray, grain: bool = True) -> np.ndarray:
         out = cv2.LUT(img, self.lut)
         if self.sat != 1.0:
@@ -214,3 +229,53 @@ def punch_zoom(img: np.ndarray, z: float, cx: float, cy: float) -> np.ndarray:
     h, w = img.shape[:2]
     M = np.float32([[z, 0, (1 - z) * cx], [0, z, (1 - z) * cy]])
     return cv2.warpAffine(img, M, (w, h), flags=cv2.INTER_LINEAR, borderMode=cv2.BORDER_REFLECT)
+
+
+class SharedGrade:
+    """Adapter over the shared engine's ``rendering.style.Grader`` (same API as Grade:
+    add_scrim / apply / add_grain), so gym renders match the rest of the channel."""
+
+    def __init__(self, w: int, h: int, accent_hex: str):
+        from ..rendering.style import Grader, get_style
+        self.st = get_style({"render": {"accent_color": accent_hex}})
+        self.g = Grader(self.st, (w, h))
+        self.w, self.h = w, h
+        self.k = 0
+        self.scrim = None
+
+    def add_scrim(self, top: float = 0.0, bottom: float = 0.0) -> None:
+        y = np.linspace(0, 1, self.h, dtype=np.float32)[:, None]
+        m = np.ones((self.h, 1), np.float32)
+        if top > 0:
+            m *= 1 - top * np.clip((0.22 - y) / 0.22, 0, 1) ** 1.5
+        if bottom > 0:
+            m *= 1 - bottom * np.clip((y - 0.70) / 0.30, 0, 1) ** 1.5
+        self.scrim = cv2.merge([np.repeat((m * 255).astype(np.uint8), self.w, 1)] * 3)
+
+    def apply(self, img: np.ndarray, grain: bool = True) -> np.ndarray:
+        self.k += 1
+        out = self.g(img, self.k, grain=grain)
+        if self.scrim is not None:
+            out = cv2.multiply(out, self.scrim, scale=1 / 255)
+        return out
+
+    def add_grain(self, img: np.ndarray) -> np.ndarray:
+        if not self.g.grain:
+            return img
+        self.k += 1
+        amt = self.st.grain * max(self.g.s, 0.5)
+        gr = self.g.grain[self.k % len(self.g.grain)]
+        return cv2.addWeighted(img, 1.0, gr, amt, -128 * amt)
+
+
+def make_grade(w: int, h: int, st: dict):
+    """Shared engine grade when available (style.engine: auto|shared), else the local one."""
+    eng = st.get("engine", "auto")
+    if eng in ("auto", "shared"):
+        try:
+            return SharedGrade(w, h, st.get("accent", "#E10600"))
+        except Exception:  # noqa: BLE001
+            if eng == "shared":
+                raise
+    return Grade(w, h, st.get("contrast", 0.55), st.get("saturation", 0.88), st.get("vignette", 0.42),
+                 st.get("grain", 5.0))

@@ -231,10 +231,10 @@ class Grader:
         tg = teal * ws * 0.45 + warm * wh * 0.12
         tr = -teal * ws * 0.6 + warm * wh
         # duotone: crimson shadows/mids, clean whites
-        wm = np.clip(1 - np.abs(g - 0.32) / 0.4, 0, 1)
-        tr = tr + m * 34 * wm
-        tg = tg - m * 8 * wm
-        tb = tb - m * 6 * wm
+        wm = np.clip((0.35 - g) / 0.35, 0, 1) ** 1.5     # crimson only in the deep shadows
+        tr = tr + m * 14 * wm
+        tg = tg - m * 4 * wm
+        tb = tb - m * 2 * wm
         base = (1 - sat) * g * 255
         K = 96.0
         luts = tuple(np.clip(base + t + K, 0, 255).astype(np.uint8) for t in (tb, tg, tr))
@@ -427,7 +427,7 @@ class TextSprite:
         gap = int(size * line_gap)
         w_txt = int(math.ceil(max(sum(a) for a in adv))) if adv else 1
         ul_h = max(4, int(size * 0.045)) if underline is not None else 0
-        ul_gap = int(size * 0.12) if underline is not None else 0
+        ul_gap = max(14, int(size * 0.12)) if underline is not None else 0
         h_txt = sum(lh) + gap * (len(lines) - 1) + ul_gap + ul_h
         pad = int(size * 0.28) + 8
         Wc, Hc = w_txt + 2 * pad, h_txt + 2 * pad
@@ -618,13 +618,13 @@ def light_streak(frame: np.ndarray, pts: Sequence[tuple[float, float]], color_bg
         th = max(1, int(width / q * (0.12 + 0.88 * f ** 1.3)))
         cv2.line(glow, tuple(int(v) for v in p0), tuple(int(v) for v in p1),
                  tuple(float(c) * f ** 1.6 for c in col), th, cv2.LINE_AA, shift=2)
-        cth = max(1, int(th * 0.32))
+        cth = max(1, int(th * 0.45))
         wv = 255.0 * f ** 2.2
         cv2.line(core, tuple(int(v) for v in p0), tuple(int(v) for v in p1),
                  (wv, wv, wv), cth, cv2.LINE_AA, shift=2)
     g = cv2.GaussianBlur(glow, (0, 0), max(1.5, width / q * 0.55)) * 1.7
     g2 = cv2.GaussianBlur(glow, (0, 0), max(3.0, width / q * 1.6)) * 0.9
-    c = cv2.GaussianBlur(core, (0, 0), 0.8)
+    c = cv2.GaussianBlur(core, (0, 0), 0.8) * 1.4
     lay = (g + g2 + c) * alpha
     lay = cv2.resize(lay, (x2 - x1, y2 - y1), interpolation=cv2.INTER_LINEAR)
     roi = frame[y1:y2, x1:x2].astype(np.float32)
@@ -686,7 +686,7 @@ class RampMap:
 
 # ==================================================================== layout
 def text_zone(occupied: Sequence[tuple[float, float]], H: int = 1920, text_h: float = 240,
-              zones: Sequence[float] = (0.22, 0.74, 0.30, 0.66)) -> Optional[float]:
+              zones: Sequence[float] = (0.22, 0.74, 0.30, 0.66), gap: float = 12.0) -> Optional[float]:
     """Centre y of a text band (height ``text_h``) not overlapping any y-range in
     ``occupied`` (canvas px). Candidates stay out of the platform UI areas
     (top ~13 %, bottom ~20 %). Returns None when nothing is free."""
@@ -697,6 +697,6 @@ def text_zone(occupied: Sequence[tuple[float, float]], H: int = 1920, text_h: fl
         if a < 0.12 * H or b > 0.82 * H:
             continue
         d = min((max(o0 - b, a - o1) for o0, o1 in occupied), default=1e9)
-        if d >= 12 and d > best_d:
+        if d >= gap and d > best_d:
             best, best_d = yc, d
     return best

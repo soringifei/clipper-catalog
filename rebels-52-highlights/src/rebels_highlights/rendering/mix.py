@@ -13,6 +13,14 @@
 * hard cuts with a 4-frame dip (2 out + 2 in); all segments are normalised
   (1080x1920, 30 fps, yuv420p, 48k stereo) and joined with ffmpeg's concat
   filter in one encode for frame-exact A/V sync.
+
+Clips rendered in the ``epic`` style (timeline ``style: epic``) get the epic
+compilation structure instead: the opener keeps its cold open (its single best
+hit), '#52' title slam, run-it-back and spotlight intro; every other clip enters
+on a hard cut into its live play and leaves right after its replay impact; every
+second cut gets a 3-frame white flash; the final clip runs into its end card. No
+dips. With a licensed ``player.music_file`` clip boundaries are nudged onto the
+music's beats (+-120 ms) and a ``_music`` version is written next to the mix.
 """
 from __future__ import annotations
 
@@ -22,7 +30,7 @@ import subprocess
 from pathlib import Path
 from typing import Optional
 
-from ..audio.audio import SAMPLE_RATE
+from ..audio.audio import SAMPLE_RATE, audio_filter_graph, detect_beats, snap_to_beat, tile_beats
 from ..core.media import ffmpeg_bin, probe
 from ..core.models import Candidate
 from .crop import OUT_H, OUT_W
@@ -51,9 +59,57 @@ def _timeline(c: Candidate) -> Optional[dict]:
     return None
 
 
+def _is_epic(tl: Optional[dict]) -> bool:
+    return bool(tl) and tl.get("style") == "epic"
+
+
+def epic_pieces(first: bool, last: bool, pre: Optional[float], rep: float,
+                tl: dict) -> list[tuple[float, float]]:
+    """Output-time pieces of an epic clip used in the mix.
+
+    Opener from 0 (cold open + title + run-it-back + intro), others from the
+    live play (``pre`` s before impact when set); end right after the replay
+    impact (``rep`` = TRIM_LEVELS replay s: >=3 full replay, else replay impact
+    + rep/2.5 s, 0 = no replay). The last clip runs into its end card (a hard
+    cut to it when the replay was trimmed)."""
+    segs = {s["kind"]: s for s in tl["segments"]}
+    live, replay, end = segs.get("live"), segs.get("replay"), segs.get("endcard")
+    if live is None:
+        return [(0.0, float(tl.get("duration", 0.0)))]
+    impact_out = float(tl.get("impact_out", live["end"]))
+    if first:
+        start = 0.0
+    elif pre is not None:
+        start = max(live["start"] + 0.4, impact_out - pre)
+    else:
+        start = live["start"] + 0.4          # skip the spotlight release (no intro here)
+    stop = float(live["end"])
+    if replay is not None and rep > 0:
+        rimp = [t for t in tl.get("impacts_out", []) if replay["start"] <= t <= replay["end"]]
+        stop = float(replay["end"]) if (rep >= 3.0 or not rimp) else \
+            float(min(replay["end"], rimp[0] + rep / 2.5))
+    pieces = [(float(start), stop)]
+    if last and end is not None:
+        if abs(stop - end["start"]) < 1e-3:
+            pieces = [(float(start), float(end["end"]))]
+        else:
+            pieces.append((float(end["start"]), float(end["end"])))
+    return pieces
+
+
+def clip_pieces(c: Candidate, first: bool, pre: Optional[float], rep: float,
+                tl: Optional[dict], last: bool = False) -> list[tuple[float, float]]:
+    if _is_epic(tl):
+        return epic_pieces(first, last, pre, rep, tl)  # type: ignore[arg-type]
+    return [core_range(c, first, pre, rep, tl)]
+
+
 def core_range(c: Candidate, first: bool, pre: Optional[float], rep: float,
                tl: Optional[dict]) -> tuple[float, float]:
     """(start, end) in the rendered clip's output time for this trim level."""
+    if _is_epic(tl):
+        p = epic_pieces(first, False, pre, rep, tl)  # type: ignore[arg-type]
+        return p[0][0], p[-1][1]
     if not tl:  # no timeline: drop a ~2.5 s end card, keep the rest
         dur = c.output_duration_s or probe(c.output_file)["duration"]
         return 0.0, max(1.0, dur - 2.5)
@@ -128,16 +184,22 @@ def order_clips(sel: list[Candidate], cfg: dict, opener: Optional[Candidate] = N
     return seq
 
 
+def _endcard_len(tl: Optional[dict]) -> float:
+    if not _is_epic(tl):
+        return 0.0
+    e = next((s for s in tl["segments"] if s["kind"] == "endcard"), None)
+    return float(e["end"] - e["start"]) if e else 0.0
+
+
 def _select(elig: list[Candidate], tls: dict, target: float) -> tuple[list[Candidate], tuple, Candidate]:
     opener = _pick_opener(elig)
-    budget = target - 0.15
+    budget = target - 0.15 - max((_endcard_len(tls.get(c.clip_id)) for c in elig), default=0.0)
     best: tuple[list[Candidate], tuple] = ([], TRIM_LEVELS[0])
     for level in TRIM_LEVELS:
         pre, rep = level
 
         def dur(c: Candidate, first: bool) -> float:
-            a, b = core_range(c, first, pre, rep, tls.get(c.clip_id))
-            return b - a
+            return sum(b - a for a, b in clip_pieces(c, first, pre, rep, tls.get(c.clip_id)))
 
         total = dur(opener, True)
         chosen = [opener] if total <= budget else []
@@ -155,6 +217,36 @@ def _select(elig: list[Candidate], tls: dict, target: float) -> tuple[list[Candi
     return best[0], best[1], opener
 
 
+def _music_file(cfg: dict) -> Optional[str]:
+    m = (cfg.get("player", {}) or {}).get("music_file") or ""
+    if not m:
+        return None
+    p = Path(m)
+    if not p.is_absolute() and cfg.get("root"):
+        p = Path(cfg["root"]) / p
+    return str(p) if p.is_file() else None
+
+
+def align_to_beats(pieces: list[tuple[float, float, int]], beats: list[float], fps: int,
+                   tol: float = 0.12, protect: int = 1) -> list[tuple[float, float, int]]:
+    """Nudge each clip boundary (end of the last piece of a clip) onto the nearest
+    beat within ``tol`` by lengthening/shortening that piece. ``protect``: pieces
+    shorter than this many seconds are never shortened below it."""
+    if not beats:
+        return pieces
+    out, t = [], 0.0
+    for i, (a, b, ci) in enumerate(pieces):
+        end_of_clip = i + 1 < len(pieces) and pieces[i + 1][2] != ci
+        if end_of_clip:
+            tgt = snap_to_beat(t + (b - a), beats, tol)
+            nb = a + round((tgt - t) * fps) / fps
+            if nb - a >= max(protect, 0.5):
+                b = nb
+        out.append((a, b, ci))
+        t += b - a
+    return out
+
+
 def build_mix(clips: list[Candidate], cfg: dict, out_dir: str, duration_s: int,
               version: int = 1) -> Optional[dict]:
     elig = [c for c in clips if _eligible(c, cfg)]
@@ -165,10 +257,26 @@ def build_mix(clips: list[Candidate], cfg: dict, out_dir: str, duration_s: int,
     if not sel:
         return None
     seq = order_clips(sel, cfg, opener)
-    ranges = [core_range(c, i == 0, pre, rep, tls.get(c.clip_id)) for i, c in enumerate(seq)]
     fps = int(cfg.get("render", {}).get("fps", 30))
-    ranges = [(a, a + round((b - a) * fps) / fps) for a, b in ranges]
-    total = sum(b - a for a, b in ranges)
+    epic = all(_is_epic(tls.get(c.clip_id)) for c in seq)
+    pieces: list[tuple[float, float, int]] = []
+    for i, c in enumerate(seq):
+        for a, b in clip_pieces(c, i == 0, pre, rep, tls.get(c.clip_id), last=i == len(seq) - 1):
+            pieces.append((a, a + round((b - a) * fps) / fps, i))
+    music = _music_file(cfg) if epic else None
+    beats: list[float] = []
+    if music:
+        try:
+            bt, _ = detect_beats(music)
+            beats = tile_beats(bt, float(probe(music).get("duration") or 0.0), duration_s + 5)
+        except Exception:  # noqa: BLE001
+            beats = []
+        pieces = align_to_beats(pieces, beats, fps)
+    total = sum(b - a for a, b, _ in pieces)
+    if total > duration_s + 0.05:   # beat nudges may not push past the target
+        a, b, ci = pieces[-1]
+        pieces[-1] = (a, b - round((total - duration_s) * fps) / fps, ci)
+        total = sum(b - a for a, b, _ in pieces)
     if total < MIN_MIX_S:
         return None
 
@@ -185,26 +293,36 @@ def build_mix(clips: list[Candidate], cfg: dict, out_dir: str, duration_s: int,
 
     rc = cfg.get("render", {})
     dip = 2.0 / fps
+    flash = 3.0 / fps
     cmd = [ffmpeg_bin(), "-y", "-hide_banner", "-loglevel", "error"]
     chains, labels = [], []
-    has_audio = [probe(c.output_file)["has_audio"] for c in seq]
-    for i, (c, (a, b)) in enumerate(zip(seq, ranges)):
+    has_audio = {}
+    fmt = f"aformat=sample_fmts=fltp:sample_rates={SAMPLE_RATE}:channel_layouts=stereo"
+    for j, (a, b, ci) in enumerate(pieces):
+        c = seq[ci]
+        if ci not in has_audio:
+            has_audio[ci] = probe(c.output_file)["has_audio"]
         d = b - a
         cmd += ["-ss", f"{a:.4f}", "-t", f"{d:.4f}", "-i", str(c.output_file)]
-        chains.append(
-            f"[{i}:v]scale={OUT_W}:{OUT_H}:force_original_aspect_ratio=decrease,"
-            f"pad={OUT_W}:{OUT_H}:(ow-iw)/2:(oh-ih)/2,setsar=1,fps={fps},format=yuv420p,"
-            f"trim=duration={d:.4f},setpts=PTS-STARTPTS,"
-            f"fade=t=in:st=0:d={dip:.4f},fade=t=out:st={max(0.0, d - dip):.4f}:d={dip:.4f}[v{i}]")
-        fmt = f"aformat=sample_fmts=fltp:sample_rates={SAMPLE_RATE}:channel_layouts=stereo"
-        if has_audio[i]:
-            chains.append(
-                f"[{i}:a]{fmt},asetpts=PTS-STARTPTS,apad,atrim=duration={d:.4f},"
-                f"afade=t=in:d={dip:.4f},afade=t=out:st={max(0.0, d - dip):.4f}:d={dip:.4f}[a{i}]")
+        base = (f"[{j}:v]scale={OUT_W}:{OUT_H}:force_original_aspect_ratio=decrease,"
+                f"pad={OUT_W}:{OUT_H}:(ow-iw)/2:(oh-ih)/2,setsar=1,fps={fps},format=yuv420p,"
+                f"trim=duration={d:.4f},setpts=PTS-STARTPTS")
+        new_clip = j > 0 and pieces[j - 1][2] != ci
+        if not epic:
+            base += f",fade=t=in:st=0:d={dip:.4f},fade=t=out:st={max(0.0, d - dip):.4f}:d={dip:.4f}"
+            afade = (f",afade=t=in:d={dip:.4f},afade=t=out:st={max(0.0, d - dip):.4f}:d={dip:.4f}")
         else:
-            chains.append(f"anullsrc=r={SAMPLE_RATE}:cl=stereo,atrim=duration={d:.4f},{fmt}[a{i}]")
-        labels.append(f"[v{i}][a{i}]")
-    chains.append(f"{''.join(labels)}concat=n={len(seq)}:v=1:a=1[vout][aout]")
+            # hard cuts; every second clip boundary (and the jump into the end card) flashes
+            if j > 0 and ((new_clip and ci % 2 == 0) or not new_clip):
+                base += f",fade=t=in:st=0:d={flash:.4f}:color=white"
+            afade = f",afade=t=in:d=0.008,afade=t=out:st={max(0.0, d - 0.008):.4f}:d=0.008"
+        chains.append(base + f"[v{j}]")
+        if has_audio[ci]:
+            chains.append(f"[{j}:a]{fmt},asetpts=PTS-STARTPTS,apad,atrim=duration={d:.4f}{afade}[a{j}]")
+        else:
+            chains.append(f"anullsrc=r={SAMPLE_RATE}:cl=stereo,atrim=duration={d:.4f},{fmt}[a{j}]")
+        labels.append(f"[v{j}][a{j}]")
+    chains.append(f"{''.join(labels)}concat=n={len(pieces)}:v=1:a=1[vout][aout]")
     cmd += ["-filter_complex", ";".join(chains), "-map", "[vout]", "-map", "[aout]",
             "-c:v", "libx264", "-preset", str(rc.get("preset", "medium")),
             "-crf", str(rc.get("crf", 20)), "-pix_fmt", "yuv420p", "-profile:v", "high",
@@ -215,7 +333,21 @@ def build_mix(clips: list[Candidate], cfg: dict, out_dir: str, duration_s: int,
     if r.returncode != 0:
         raise RuntimeError(f"mix ffmpeg failed: {r.stderr[-3000:]}")
     actual = probe(out)["duration"] or total
-    return {"output_file": str(out), "clip_ids": [c.clip_id for c in seq],
-            "duration_s": round(float(actual), 2), "target_s": int(duration_s),
-            "trim_level": {"pre_impact_s": pre, "replay_s": rep},
-            "short_of_target": actual < 0.7 * float(duration_s)}
+    res = {"output_file": str(out), "clip_ids": [c.clip_id for c in seq],
+           "duration_s": round(float(actual), 2), "target_s": int(duration_s),
+           "trim_level": {"pre_impact_s": pre, "replay_s": rep},
+           "style": "epic" if epic else "clean",
+           "short_of_target": actual < 0.7 * float(duration_s)}
+    if music:
+        mout = out.with_name(out.stem + "_music.mp4")
+        graph = "[0:a]anull[game];[1:a]anull[music];" + audio_filter_graph(True, cfg)
+        mc = [ffmpeg_bin(), "-y", "-hide_banner", "-loglevel", "error", "-i", str(out),
+              "-stream_loop", "-1", "-i", music, "-filter_complex", graph, "-map", "0:v",
+              "-map", "[aout]", "-c:v", "copy", "-c:a", "aac", "-b:a", "160k",
+              "-ar", str(SAMPLE_RATE), "-ac", "2", "-t", f"{actual:.3f}", "-movflags", "+faststart",
+              str(mout)]
+        rr = subprocess.run(mc, capture_output=True, text=True)
+        if rr.returncode == 0:
+            res["music_file"] = str(mout)
+            res["beats_aligned"] = bool(beats)
+    return res

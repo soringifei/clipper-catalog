@@ -198,9 +198,12 @@ def _iou(a: np.ndarray, b: np.ndarray) -> float:
 
 
 def select_main_track(raw: RawPose) -> np.ndarray:
-    """Index into raw detections for each work frame (-1 = none). Main athlete =
-    track with the largest sum of sqrt(area) * centrality * kp-confidence (i.e. big,
-    central and persistent); tracker id switches are bridged by box IoU."""
+    """Index into raw detections for each work frame (-1 = none).
+
+    Main athlete = track with the largest sum of sqrt(area) * centrality * kp-confidence
+    (big, central, persistent). Frames it misses are filled by other tracks that don't
+    coexist with it (tracker id switch after an occlusion, or the next shot of a montage)
+    when they are substantial, then short gaps are bridged by box IoU."""
     if len(raw.frames) == 0:
         return np.full(raw.n_frames, -1)
     W, H = raw.width, raw.height
@@ -211,36 +214,43 @@ def select_main_track(raw: RawPose) -> np.ndarray:
     kc = np.nanmean(raw.kps[:, :, 2], 1)
     w = area * cent * (0.3 + kc)
     ids = raw.ids.copy()
-    # untracked detections get a pseudo id per frame so they can't win on persistence
-    ids[ids < 0] = -1 - np.arange((ids < 0).sum())
-    uniq = np.unique(ids)
-    tot = {u: w[ids == u].sum() for u in uniq}
-    main = max(tot, key=tot.get)
+    ids[ids < 0] = -1 - np.arange((ids < 0).sum())   # untracked: pseudo ids, never persistent
+    tot: dict[int, float] = {}
+    for u in np.unique(ids):
+        tot[int(u)] = float(w[ids == u].sum())
+    order = sorted(tot, key=tot.get, reverse=True)
+    main = order[0]
+    out = np.full(raw.n_frames, -1)
+    min_len = max(3, int(0.8 * raw.fps / max(1, np.median(np.diff(raw.processed)) if len(raw.processed) > 1 else 1)))
+    for tid in order:
+        if tid != main and (tid < 0 or tot[tid] < 0.15 * tot[main]):
+            continue
+        idx = np.flatnonzero(ids == tid)
+        fr = raw.frames[idx]
+        free = out[fr] == -1
+        if tid != main:
+            if free.sum() < min_len or (~free).sum() > 0.2 * len(idx):
+                continue
+        # one detection per frame per track (keep the highest weight)
+        for j in idx[free][np.argsort(-w[idx[free]])]:
+            if out[raw.frames[j]] == -1:
+                out[raw.frames[j]] = j
+    # bridge short gaps by IoU with the last chosen box
     by_frame: dict[int, list[int]] = {}
     for j, f in enumerate(raw.frames):
         by_frame.setdefault(int(f), []).append(j)
-    out = np.full(raw.n_frames, -1)
     last_box, last_f = None, -10 ** 9
-    gap_switch = max(1, int(0.5 * raw.fps))
-    for f in sorted(by_frame):
-        dets = by_frame[f]
-        hit = [j for j in dets if ids[j] == main]
-        if hit:
-            j = hit[0]
-        elif last_box is not None:
-            ious = [(_iou(raw.boxes[j], last_box), j) for j in dets]
-            best = max(ious)
-            if best[0] < 0.3 or f - last_f > 2 * raw.fps:
-                continue
-            j = best[1]
-            if ids[j] >= 0 and f - last_f >= 0 and tot.get(ids[j], 0) > 0:
-                # adopt the new id if the old one has vanished
-                if f - last_f >= gap_switch or not any(ids[k] == main for k in dets):
-                    main = ids[j]
-        else:
+    max_gap = int(0.5 * raw.fps)
+    for f in range(raw.n_frames):
+        if out[f] >= 0:
+            last_box, last_f = raw.boxes[out[f]], f
             continue
-        out[f] = j
-        last_box, last_f = raw.boxes[j], f
+        if last_box is None or f - last_f > max_gap or f not in by_frame:
+            continue
+        best = max((_iou(raw.boxes[j], last_box), j) for j in by_frame[f])
+        if best[0] >= 0.4:
+            out[f] = best[1]
+            last_box, last_f = raw.boxes[best[1]], f
     return out
 
 
