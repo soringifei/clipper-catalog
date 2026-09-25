@@ -1,0 +1,8 @@
+cache/
+state/
+data/
+outputs/
+reports/
+review/*.json
+__pycache__/
+*.pyc
