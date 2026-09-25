@@ -39,21 +39,28 @@ video:
 edit:
   min_clip_s: 15
   max_clip_s: 60                # long raw clips are trimmed to the best run of reps
-  intro_s: 1.4
-  outro_s: 2.6
-  slowmo_speed: 0.5
-  slowmo_window_s: 0.45         # each side of the rep's peak position
-  freeze_s: 0.7
+  intro_s: 1.6
+  outro_s: 3.0
+  ramp_half_s: 0.6              # speed ramp into each highlighted rep's bottom/peak (+-s)
+  ramp_min_speed: 0.3           # slowest point of the ramp (frame-blended, no freeze)
+  ramp_zoom: 0.07               # push-in during the ramp
+  slowmo_speed: 0.5             # side-by-side second pass
   peak_moments: auto            # auto (all reps if <= 5 else best 3) | all | best | none
-  sparkline: true
+  sparkline: true               # thin live angle-over-time line along the bottom
   label_min_confidence: 0.55    # exercise name only shown above this confidence
 
 style:
   accent: "#E10600"
+  # condensed display face: first of assets/fonts/{Anton,BebasNeue,Oswald}*.ttf, else
+  # DejaVuSans-Bold squeezed horizontally
   font: /usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf
   font_regular: /usr/share/fonts/truetype/dejavu/DejaVuSans.ttf
   skeleton_color: "#FFFFFF"
-  trail_s: 1.6
+  trail_s: 1.6                  # bar-path light streak length
+  contrast: 0.55                # S-curve strength
+  saturation: 0.88
+  vignette: 0.42
+  grain: 5.0                    # film grain sigma (0 = off)
 
 mix:
   max_clips: 6
