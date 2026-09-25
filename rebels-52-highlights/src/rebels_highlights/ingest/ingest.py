@@ -47,6 +47,7 @@ def _download(game: Game, dest: Path) -> dict[str, Any]:
         "no_warnings": True,
         "noprogress": True,
         "retries": 3,
+        "socket_timeout": 30,
         "allow_unplayable_formats": False,  # never touch DRM formats
         "ffmpeg_location": ffmpeg_bin(),
     }
@@ -62,7 +63,7 @@ def _download(game: Game, dest: Path) -> dict[str, Any]:
                     "download it manually and set local_path in games.yaml)")
         elif "drm" in msg.lower():
             hint = " (DRM-protected: not supported)"
-        raise IngestError(f"yt-dlp failed for {game.game_id} <{game.url}>: {msg}{hint}") from e
+        raise IngestError(f"yt-dlp failed for {game.game_id} <{game.url}>{hint}: {msg}") from e
     if info is None:
         raise IngestError(f"yt-dlp returned no info for {game.url}")
     if info.get("_type") == "playlist":
