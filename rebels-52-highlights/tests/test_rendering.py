@@ -1,0 +1,195 @@
+"""Rendering tests on a synthetic 1280x720 30 fps landscape source with audio."""
+from __future__ import annotations
+
+import subprocess
+import time
+from pathlib import Path
+
+import numpy as np
+import pytest
+
+from rebels_highlights.core.config import load_config
+from rebels_highlights.core.media import ffmpeg_bin, probe
+from rebels_highlights.core.models import Candidate, EventResult, PlayerTrajectory, VideoInfo
+from rebels_highlights.rendering.crop import compute_crop_path
+from rebels_highlights.rendering.mix import build_mix, order_clips
+from rebels_highlights.rendering.render import clip_basename, render_clip
+
+W, H, FPS, DUR = 1280, 720, 30, 12.0
+SNAP, IMPACT = 3.0, 6.5
+BOX_W, BOX_H = 44, 96
+
+
+def p52(t: float) -> tuple[float, float]:
+    """#52 centre: pre-snap stance, then flows right to meet the carrier."""
+    if t < SNAP:
+        return 420.0, 380.0
+    if t < IMPACT:
+        f = (t - SNAP) / (IMPACT - SNAP)
+        return 420.0 + 300 * f, 380.0 - 40 * f
+    return 720.0 + 20 * (t - IMPACT), 340.0 + 10 * (t - IMPACT)
+
+
+def carrier(t: float) -> tuple[float, float]:
+    if t < SNAP:
+        return 900.0, 330.0
+    if t < IMPACT:
+        f = (t - SNAP) / (IMPACT - SNAP)
+        return 900.0 - 150 * f, 330.0 + 10 * f
+    return 750.0 + 15 * (t - IMPACT), 340.0 + 10 * (t - IMPACT)
+
+
+def box(c):
+    return [c[0] - BOX_W / 2, c[1] - BOX_H / 2, c[0] + BOX_W / 2, c[1] + BOX_H / 2]
+
+
+@pytest.fixture(scope="module")
+def workdir(tmp_path_factory):
+    return tmp_path_factory.mktemp("render")
+
+
+@pytest.fixture(scope="module")
+def source(workdir) -> str:
+    import cv2
+    path = str(workdir / "src.mp4")
+    cmd = [ffmpeg_bin(), "-y", "-hide_banner", "-loglevel", "error",
+           "-f", "rawvideo", "-pix_fmt", "bgr24", "-s", f"{W}x{H}", "-r", str(FPS), "-i", "pipe:0",
+           "-f", "lavfi", "-i", f"sine=frequency=330:sample_rate=48000:duration={DUR}",
+           "-c:v", "libx264", "-preset", "ultrafast", "-pix_fmt", "yuv420p",
+           "-c:a", "aac", "-shortest", path]
+    p = subprocess.Popen(cmd, stdin=subprocess.PIPE)
+    base = np.zeros((H, W, 3), np.uint8)
+    base[:] = (40, 120, 40)
+    for x in range(0, W, 80):
+        cv2.line(base, (x, 0), (x, H), (230, 230, 230), 2)
+    for i in range(int(DUR * FPS)):
+        t = i / FPS
+        f = base.copy()
+        for c, col in ((p52(t), (20, 20, 200)), (carrier(t), (200, 90, 20))):
+            b = [int(v) for v in box(c)]
+            cv2.rectangle(f, (b[0], b[1]), (b[2], b[3]), col, -1)
+        cv2.putText(f, "52", (int(p52(t)[0]) - 15, int(p52(t)[1])), cv2.FONT_HERSHEY_SIMPLEX,
+                    0.6, (255, 255, 255), 2)
+        p.stdin.write(f.tobytes())
+    p.stdin.close()
+    assert p.wait() == 0
+    return path
+
+
+@pytest.fixture(scope="module")
+def cfg():
+    return load_config(overrides={"render": {"preset": "veryfast", "crf": 26}})
+
+
+def make_case(source: str, idx: int, play_type: str, unit: str, tier: str, score: float,
+              game: str = "game_001"):
+    ts = [i / 15 for i in range(int(1.0 * 15), int(11.0 * 15))]
+    traj = PlayerTrajectory(play_id=f"{game}_p{idx:03d}", track_id=7, times=ts,
+                            boxes=[box(p52(t)) for t in ts],
+                            target_times=[t for t in ts if t >= 2.0],
+                            target_boxes=[box(carrier(t)) for t in ts if t >= 2.0],
+                            target_role="ball_carrier")
+    ev = EventResult(play_id=traj.play_id, play_type=play_type, event_confidence=0.85,
+                     impact_s=IMPACT, contact_point=[735.0, 340.0], primary_actor_score=0.8)
+    cand = Candidate(clip_id=f"{game}_c{idx:03d}", game_id=game, play_id=traj.play_id,
+                     unit=unit, play_type=play_type, source_start_s=2.0, snap_time_s=SNAP,
+                     impact_time_s=IMPACT, source_end_s=9.0, track_id=7,
+                     identity_confidence=0.91, event_confidence=0.85,
+                     overall_highlight_score=score, tier=tier, review_status="AUTO_APPROVED",
+                     caption=f"#52 {play_type.replace('_', ' ')}")
+    info = VideoInfo(game_id=game, path=source, duration_s=DUR, fps=FPS, width=W, height=H,
+                     has_audio=True)
+    return cand, info, traj, ev
+
+
+def test_basename():
+    c = Candidate(clip_id="x", game_id="game_003", play_id="game_003_p014",
+                  unit="special_teams", play_type="special_teams_tackle", snap_time_s=3725.4,
+                  identity_confidence=0.873)
+    assert clip_basename(c) == "unknown-date_game-003_p014_special-teams_tackle_52_01h02m05s_c087"
+    c.date, c.opponent, c.unit, c.play_type = "2025-05-10", "Cluj Crusaders", "defense", "tackle_for_loss"
+    assert clip_basename(c) == "2025-05-10_rebels-vs-cluj-crusaders_p014_defense_tfl_52_01h02m05s_c087"
+
+
+def test_crop_safe_region_and_split(cfg):
+    cand, info, traj, ev = make_case("unused", 1, "solo_tackle", "defense", "B", 0.6)
+    path = compute_crop_path(traj, ev, W, H, 1.0, 10.0, cfg)
+    assert path.mode == "vertical"
+    half = path.safe_region * path.crop_w / 2
+    inside = np.abs(path.px - path.cx) <= half + 1e-6
+    assert inside.mean() > 0.95
+    # boxes also stay fully inside the crop
+    assert np.all(path.cx - path.crop_w / 2 >= -1e-6) and np.all(path.cx + path.crop_w / 2 <= W + 1e-6)
+    # far-apart target at impact -> split mode
+    far = PlayerTrajectory(play_id="p", track_id=1, times=traj.times, boxes=traj.boxes,
+                           target_times=traj.times,
+                           target_boxes=[[1150, 300, 1194, 396]] * len(traj.times))
+    sp = compute_crop_path(far, ev, W, H, 1.0, 10.0, cfg)
+    assert sp.mode == "split"
+    assert sp.crop_w > path.crop_w
+
+
+@pytest.fixture(scope="module")
+def rendered(source, cfg, workdir):
+    out = []
+    specs = [(1, "sack", "defense", "S", 0.92), (2, "solo_tackle", "defense", "B", 0.65),
+             (3, "special_teams_tackle", "special_teams", "A", 0.80)]
+    times = []
+    for idx, pt, unit, tier, sc in specs:
+        cand, info, traj, ev = make_case(source, idx, pt, unit, tier, sc)
+        t0 = time.time()
+        res = render_clip(cand, info, traj, ev, cfg, str(workdir / "clips"))
+        times.append(time.time() - t0)
+        cand.output_file, cand.thumbnail_file = res["output_file"], res["thumbnail_file"]
+        cand.output_duration_s = res["output_duration_s"]
+        out.append((cand, res, traj))
+    print(f"render times: {[round(t, 1) for t in times]} s")
+    return out
+
+
+def test_render_clip(rendered):
+    cand, res, _ = rendered[0]
+    assert Path(res["output_file"]).is_file()
+    assert Path(res["thumbnail_file"]).is_file()
+    assert res["music_file"] is None
+    pi = probe(res["output_file"])
+    assert (pi["width"], pi["height"]) == (1080, 1920)
+    assert pi["vcodec"] == "h264" and pi["acodec"] == "aac" and pi["has_audio"]
+    assert 15.0 <= pi["duration"] <= 60.0
+    assert abs(pi["duration"] - res["output_duration_s"]) < 0.3
+    assert res["crop_mode"] == "vertical" and "POOR_VERTICAL_CROP" not in res["review_reasons"]
+    import cv2
+    th = cv2.imread(res["thumbnail_file"])
+    assert th.shape[:2] == (1920, 1080)
+
+
+def test_music_version(source, cfg, workdir):
+    music = str(workdir / "music.m4a")
+    subprocess.run([ffmpeg_bin(), "-y", "-hide_banner", "-loglevel", "error", "-f", "lavfi",
+                    "-i", "sine=frequency=660:sample_rate=48000:duration=5", "-c:a", "aac", music],
+                   check=True)
+    cand, info, traj, ev = make_case(source, 9, "open_field_tackle", "defense", "A", 0.7)
+    res = render_clip(cand, info, traj, ev, cfg, str(workdir / "music"), music_file=music)
+    assert res["music_file"] and Path(res["music_file"]).is_file()
+    assert res["music_file"].endswith("_music.mp4")
+    pm = probe(res["music_file"])
+    assert pm["has_audio"] and abs(pm["duration"] - res["output_duration_s"]) < 0.3
+
+
+def test_build_mix(rendered, cfg, workdir):
+    clips = [c for c, _, _ in rendered]
+    seq = order_clips(clips, cfg)
+    assert seq[0].play_type == "sack"            # strongest S/A opens
+    assert seq[-1].play_type == "special_teams_tackle"  # next strongest closes
+    res = build_mix(clips, cfg, str(workdir / "mixes"), 30)
+    assert res is not None
+    assert Path(res["output_file"]).is_file()
+    assert Path(res["output_file"]).name.startswith("52_MLB_Bucharest-Rebels_mix_games-001-001_")
+    pi = probe(res["output_file"])
+    assert pi["duration"] <= 30.0 + 0.05
+    assert pi["duration"] >= 15.0
+    assert (pi["width"], pi["height"]) == (1080, 1920) and pi["has_audio"]
+    # clips below identity threshold / not approved are excluded
+    clips[1].review_status = "REVIEW"
+    res2 = build_mix(clips, cfg, str(workdir / "mixes"), 30, version=2)
+    assert res2 is None or clips[1].clip_id not in res2["clip_ids"]

@@ -1,0 +1,37 @@
+[build-system]
+requires = ["setuptools>=61", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "rebels-52-highlights"
+version = "0.1.0"
+description = "Find and edit vertical highlight clips of Bucharest Rebels #52 (MLB) from full-game videos"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+  "numpy",
+  "opencv-python-headless",
+  "scenedetect",
+  "pyyaml",
+  "pillow",
+  "imageio-ffmpeg",
+  "yt-dlp",
+]
+
+[project.optional-dependencies]
+gpu = ["ultralytics", "torch", "lap"]
+ml = ["ultralytics", "torch", "lap"]
+ocr = ["paddleocr", "paddlepaddle"]
+pose = ["mediapipe"]
+sam = ["sam2"]
+dev = ["pytest"]
+
+[project.scripts]
+rebels-highlights = "rebels_highlights.__main__:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]
