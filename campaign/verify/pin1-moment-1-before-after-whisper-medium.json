@@ -1,0 +1,384 @@
+{
+ "language": "en",
+ "compute_type": "float16",
+ "words": [
+  {
+   "start": 0.0,
+   "end": 0.28,
+   "text": "We're"
+  },
+  {
+   "start": 0.28,
+   "end": 0.52,
+   "text": "looking"
+  },
+  {
+   "start": 0.52,
+   "end": 0.76,
+   "text": "at"
+  },
+  {
+   "start": 0.76,
+   "end": 0.88,
+   "text": "the"
+  },
+  {
+   "start": 0.88,
+   "end": 1.18,
+   "text": "universe"
+  },
+  {
+   "start": 1.18,
+   "end": 1.42,
+   "text": "from"
+  },
+  {
+   "start": 1.42,
+   "end": 1.5,
+   "text": "a"
+  },
+  {
+   "start": 1.5,
+   "end": 4.08,
+   "text": "completely"
+  },
+  {
+   "start": 4.08,
+   "end": 4.36,
+   "text": "different"
+  },
+  {
+   "start": 4.36,
+   "end": 4.86,
+   "text": "perspective."
+  },
+  {
+   "start": 5.38,
+   "end": 5.42,
+   "text": "We're"
+  },
+  {
+   "start": 5.42,
+   "end": 5.7,
+   "text": "looking,"
+  },
+  {
+   "start": 5.74,
+   "end": 6.12,
+   "text": "instead"
+  },
+  {
+   "start": 6.12,
+   "end": 6.6,
+   "text": "of"
+  },
+  {
+   "start": 6.6,
+   "end": 7.2,
+   "text": "through"
+  },
+  {
+   "start": 7.2,
+   "end": 7.56,
+   "text": "the"
+  },
+  {
+   "start": 7.56,
+   "end": 7.9,
+   "text": "light"
+  },
+  {
+   "start": 7.9,
+   "end": 8.3,
+   "text": "that"
+  },
+  {
+   "start": 8.3,
+   "end": 8.48,
+   "text": "you"
+  },
+  {
+   "start": 8.48,
+   "end": 8.66,
+   "text": "and"
+  },
+  {
+   "start": 8.66,
+   "end": 8.84,
+   "text": "I"
+  },
+  {
+   "start": 8.84,
+   "end": 9.14,
+   "text": "see"
+  },
+  {
+   "start": 9.14,
+   "end": 9.46,
+   "text": "through"
+  },
+  {
+   "start": 9.46,
+   "end": 9.74,
+   "text": "our"
+  },
+  {
+   "start": 9.74,
+   "end": 10.18,
+   "text": "own"
+  },
+  {
+   "start": 10.18,
+   "end": 10.6,
+   "text": "eyes,"
+  },
+  {
+   "start": 10.96,
+   "end": 11.08,
+   "text": "we"
+  },
+  {
+   "start": 11.08,
+   "end": 11.48,
+   "text": "actually"
+  },
+  {
+   "start": 11.48,
+   "end": 11.72,
+   "text": "look"
+  },
+  {
+   "start": 11.72,
+   "end": 11.92,
+   "text": "at"
+  },
+  {
+   "start": 11.92,
+   "end": 12.12,
+   "text": "it"
+  },
+  {
+   "start": 12.12,
+   "end": 12.46,
+   "text": "through"
+  },
+  {
+   "start": 12.46,
+   "end": 12.72,
+   "text": "gamma"
+  },
+  {
+   "start": 12.72,
+   "end": 12.92,
+   "text": "rays,"
+  },
+  {
+   "start": 13.2,
+   "end": 13.2,
+   "text": "which"
+  },
+  {
+   "start": 13.2,
+   "end": 13.74,
+   "text": "is"
+  },
+  {
+   "start": 13.74,
+   "end": 14.06,
+   "text": "another"
+  },
+  {
+   "start": 14.06,
+   "end": 14.36,
+   "text": "form"
+  },
+  {
+   "start": 14.36,
+   "end": 14.62,
+   "text": "of"
+  },
+  {
+   "start": 14.62,
+   "end": 14.72,
+   "text": "light,"
+  },
+  {
+   "start": 14.74,
+   "end": 14.9,
+   "text": "or"
+  },
+  {
+   "start": 14.9,
+   "end": 15.1,
+   "text": "it's"
+  },
+  {
+   "start": 15.1,
+   "end": 15.26,
+   "text": "the"
+  },
+  {
+   "start": 15.26,
+   "end": 15.7,
+   "text": "same"
+  },
+  {
+   "start": 15.7,
+   "end": 16.08,
+   "text": "thing"
+  },
+  {
+   "start": 16.08,
+   "end": 16.32,
+   "text": "as"
+  },
+  {
+   "start": 16.32,
+   "end": 16.48,
+   "text": "the"
+  },
+  {
+   "start": 16.48,
+   "end": 16.6,
+   "text": "light"
+  },
+  {
+   "start": 16.6,
+   "end": 16.78,
+   "text": "we"
+  },
+  {
+   "start": 16.78,
+   "end": 16.94,
+   "text": "see"
+  },
+  {
+   "start": 16.94,
+   "end": 17.2,
+   "text": "with"
+  },
+  {
+   "start": 17.2,
+   "end": 17.42,
+   "text": "our"
+  },
+  {
+   "start": 17.42,
+   "end": 17.62,
+   "text": "own"
+  },
+  {
+   "start": 17.62,
+   "end": 17.88,
+   "text": "eyes,"
+  },
+  {
+   "start": 18.12,
+   "end": 18.44,
+   "text": "except"
+  },
+  {
+   "start": 18.44,
+   "end": 19.04,
+   "text": "that"
+  },
+  {
+   "start": 19.04,
+   "end": 19.36,
+   "text": "the"
+  },
+  {
+   "start": 19.36,
+   "end": 19.56,
+   "text": "light"
+  },
+  {
+   "start": 19.56,
+   "end": 20.08,
+   "text": "itself"
+  },
+  {
+   "start": 20.08,
+   "end": 20.52,
+   "text": "is"
+  },
+  {
+   "start": 20.52,
+   "end": 20.96,
+   "text": "literally"
+  },
+  {
+   "start": 20.96,
+   "end": 21.24,
+   "text": "tens"
+  },
+  {
+   "start": 21.24,
+   "end": 21.56,
+   "text": "of"
+  },
+  {
+   "start": 21.56,
+   "end": 21.96,
+   "text": "billions"
+  },
+  {
+   "start": 21.96,
+   "end": 22.22,
+   "text": "of"
+  },
+  {
+   "start": 22.22,
+   "end": 22.78,
+   "text": "times"
+  },
+  {
+   "start": 22.78,
+   "end": 23.84,
+   "text": "more"
+  },
+  {
+   "start": 23.84,
+   "end": 24.44,
+   "text": "energetic"
+  },
+  {
+   "start": 24.94,
+   "end": 25.22,
+   "text": "than"
+  },
+  {
+   "start": 25.22,
+   "end": 25.82,
+   "text": "the"
+  },
+  {
+   "start": 25.82,
+   "end": 26.22,
+   "text": "ordinary"
+  },
+  {
+   "start": 26.22,
+   "end": 26.5,
+   "text": "light"
+  },
+  {
+   "start": 26.5,
+   "end": 26.84,
+   "text": "that"
+  },
+  {
+   "start": 26.84,
+   "end": 27.14,
+   "text": "we"
+  },
+  {
+   "start": 27.14,
+   "end": 27.28,
+   "text": "see."
+  }
+ ],
+ "model": "faster-whisper-medium (local cache)",
+ "device": "cuda",
+ "seconds": 20.0
+}

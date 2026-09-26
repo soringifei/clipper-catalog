@@ -14,7 +14,7 @@ Ce faci + pentru cine + CTA spre DM, cum cere CAMPAIGN-V2. Oferta „Podcastul t
 
 | Pin | Text pe ecran | Descriere |
 |---|---|---|
-| 1. Before/After | [cea mai puternică replică din clip, verificată pe audio] | Left: the raw 16:9 interview. Right: the vertical cut, with the frame kept on the speaker and captions timed to each word. The source is a NASA interview in the public domain. If you want your episode cut like this, DM me. |
+| 1. Before/After | We're looking at the universe from a completely different perspective. | First the raw 16:9 interview, then the vertical cut, with the frame kept on the speaker and captions timed to each word. The source is a NASA interview in the public domain. If you want your episode cut like this, DM me. |
 | 2. Prețuri | What a clip costs | Trial: one clip for 25 €, one round of changes. You send the episode, the moment you like and where you post. Monthly packs start at 150 €. DM me with a link and I'll reply with the scope. |
 | 3. Mostră gratuită | Send me your podcast. I'll cut one clip free. | Send a link to an episode you own. I pick a moment, cut it vertical with captions and send you the file. I only post it here if you say yes. You keep the clip either way. |
 
@@ -37,7 +37,7 @@ Hashtag-urile (3–4 pe postare, fără #fyp) sunt în JSON. Conform CAMPAIGN-V2
 
 ## NEVERIFICAT / decizii pentru Sorin
 
-- **Pin 1:** montajul before/after în formatul V2 (2–3 s de 16:9 → 9:16) nu există încă. `glast-vertical-demo.mp4` (NASA, Steve Ritz) e doar varianta verticală. `site/REVIEW.json` are `humanAudioReviewed: false` și `publicLikenessReviewed: false`, iar replica de pe ecran trebuie luată din audio, nu din `transcript-draft.json`.
+- **Pin 1 (actualizat 26.09):** montajul există, necomis, în worktree-ul `ch-hookhaus-pipeline-before-after`: `clipper/hookhaus-v2/out/moment-1-before-after.mp4` (1080×1920, 27,3 s). Mai întâi rulează interviul brut 16:9 cu eticheta „BEFORE · RAW 16:9”, apoi varianta verticală cu subtitrări cuvânt cu cuvânt (`verify/rerun-sheet.jpg`). Replica de pe ecran e prima frază spusă în clip. Am transcris audio-ul din MP4-ul randat cu faster-whisper-medium (CUDA, 26.09; `campaign/verify/pin1-moment-1-before-after-whisper-medium.json`), iar textul e identic cu transcrierea făcută de pipeline cu whisper-small (`out/manifest.json`, momentul 1). E o verificare automată, cu două modele. NEVERIFICAT: nimeni nu a ascultat clipul. `site/REVIEW.json` are încă `humanAudioReviewed: false` și `publicLikenessReviewed: false`. Ascultă clipul înainte să-l fixezi, iar descrierea nu trebuie să sugereze că NASA te susține.
 - **Pin 2:** Trial 25 € și „de la 150 €/lună” vin din `CAMPAIGN.md`. Ce include Starter (150 €) și Growth (350 €) nu scrie nicăieri, deci nici câte clipuri. „O rundă de modificări” la Trial vine din draftul de aplicare (acolo în USD). Dacă oferta de 30 de clipuri/lună se leagă de un pachet, trebuie decis înainte de a o pune pe ecran.
 - **Pin 3 și hook-urile 9–10:** câte mostre gratuite accepți (pe săptămână sau per emisiune) rămâne decizia ta. Textul nu promite un termen de livrare.
 - **Hook 5 și 8** descriu metoda de lucru. Înregistrează-le doar dacă așa lucrezi efectiv.

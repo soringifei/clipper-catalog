@@ -1,6 +1,6 @@
 // Deterministic checks for hookhaus-v2-copy.json: structure from CAMPAIGN-V2,
 // the blader/humanizer patterns a script can catch, and no invented numbers.
-// Run: node --test campaign/
+// Run: node --test campaign/lint-copy.test.mjs
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
@@ -67,4 +67,10 @@ test('3 to 5 hashtags per post, lowercase, no #fyp', () => {
       assert.ok(!['#fyp', '#foryou'].includes(tag));
     }
   }
+});
+
+test('before/after pin shows a real spoken line, not a placeholder', () => {
+  const pin = copy.pins.find((p) => p.format === 'before-after');
+  assert.doesNotMatch(pin.onScreen, /[[\]]/);
+  assert.doesNotMatch(pin.caption, /\b(left|right):/i, 'the before and after play in sequence');
 });
