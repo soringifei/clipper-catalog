@@ -42,7 +42,7 @@ class GateTest(unittest.TestCase):
         self.assertFalse(ed[0]["jev"]["pass"])
 
     def test_slop_incomplete_and_description_thresholds(self):
-        for kw, why in [({"slop": 0.8}, "AI-slop"), ({"whole": 0.2}, "incomplete"), ({"desc": 0.4}, "description")]:
+        for kw, why in [({"slop": 0.8}, "formulaic text"), ({"whole": 0.2}, "incomplete"), ({"desc": 0.4}, "description")]:
             c = cand(0)
             self.assertEqual(jev_gate.gate([c], evaluate=fake(**kw)), [])
             self.assertTrue(any(w.startswith(why) for w in c["jev"]["why"]))
