@@ -16,6 +16,8 @@ import argparse, datetime as dt, html, importlib.util, json, math, os, re, shuti
 import urllib.request
 from pathlib import Path
 
+import jev_gate  # Jev quality gate (advisory scores; fail open)
+
 ROOT = Path(__file__).resolve().parent
 CLIPPER = ROOT.parent
 TRANSCRIPTS = ROOT / "transcripts"
@@ -800,6 +802,10 @@ def write_review(day_dir, items, day):
     for it in items:
         e = html.escape
         notes = "".join(f"<li>{e(n)}</li>" for n in it["quality_notes"])
+        j = it.get("jev")
+        jev = (f'<p class="small jev {"ok" if j.get("pass") else "bad"}">Jev: hook {j.get("hook")}/4 &middot; complete {j.get("whole")} &middot; '
+               f'formulaic text {j.get("slop")} &middot; desc {j.get("desc")}/4 &middot; visual quality unverified'
+               f'{" &middot; " + e(", ".join(j.get("why") or [])) if j.get("why") else ""}</p>') if j else ""
         cards.append(f"""<article class="card">
   <video src="{e(it['file'])}" poster="{e(it['cover'])}" controls preload="none" playsinline></video>
   <div class="meta">
@@ -807,6 +813,7 @@ def write_review(day_dir, items, day):
     <p class="hook">&ldquo;{e(it['hook_line'])}&rdquo;</p>
     <p class="desc">{e(it['description'])}</p>
     <p class="tags">{e(' '.join(it['hashtags']))}</p>
+    {jev}
     <p class="small">Source: <a href="{e(it['source_url'])}">{e(it['source_title'])}</a>, {e(it['source_range'])}</p>
     <p class="small">Rights: {e(it['rights_basis'])}</p>
     <details><summary>Quality notes</summary><ul>{notes}</ul></details>
@@ -825,6 +832,7 @@ main{{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap
 video{{width:100%;aspect-ratio:9/16;background:#000;display:block}} .meta{{padding:12px 14px}}
 .hook{{font-weight:600;margin:.4em 0}} .desc{{margin:.4em 0}} .tags{{color:var(--accent);margin:.3em 0}}
 .small{{color:var(--muted);font-size:12.5px}} a{{color:#8ab4ff}} .pick{{font-weight:600}} input{{accent-color:var(--accent)}}
+.jev.ok{{color:#7fd88f}} .jev.bad{{color:#ff8a80}}
 #sel{{position:sticky;bottom:0;background:#000c;padding:10px 16px;text-align:center}} button{{font:inherit;padding:6px 12px}}
 </style></head><body>
 <header><h1>HookHaus &middot; {day} &middot; {len(items)} clips</h1>
@@ -926,11 +934,25 @@ def main():
     ap.add_argument("--review-only", action="store_true")
     ap.add_argument("--no-llm", action="store_true")
     ap.add_argument("--no-board", action="store_true")
+    ap.add_argument("--no-jev", action="store_true", help="skip the Jev quality gate")
+    ap.add_argument("--jev-only", action="store_true", help="score an existing batch with Jev, update captions.json + review.html")
     ap.add_argument("--picks", help="editor picks JSON (manual segments + copy); skips auto selection")
     ap.add_argument("--wait-for-game", type=int, default=0, help="minutes to wait for a running game to close")
     a = ap.parse_args()
     lower_priority()
     day, day_dir = a.date, ROOT / a.date
+    if a.jev_only:
+        cap = day_dir / "captions.json"
+        meta = json.loads(cap.read_text(encoding="utf-8"))
+        res = jev_gate.score([{"key": it["id"], "opening": jev_gate.opening_from_item(it), "text": it.get("transcript", ""),
+                               "description": re.sub(r"\s*Source: NASA\..*$", "", it.get("description", ""))} for it in meta["clips"]])
+        for it in meta["clips"]:
+            it["jev"] = res.get(it["id"])
+        meta["jev_scored"] = dt.datetime.now().isoformat(timespec="seconds")
+        cap.write_text(json.dumps(meta, ensure_ascii=False, indent=1), encoding="utf-8")
+        write_review(day_dir, meta["clips"], day)
+        print(json.dumps({it["id"]: it["jev"] for it in meta["clips"]}, ensure_ascii=False))
+        return
     if a.review_only:
         items = json.loads((day_dir / "captions.json").read_text(encoding="utf-8"))["clips"]
         write_review(day_dir, items, day)
@@ -1004,6 +1026,17 @@ def main():
              for c in sorted(pool, key=lambda c: -c["final"])], ensure_ascii=False, indent=1), encoding="utf-8")
         per_source = a.count if len(sources) == 1 else max(4, math.ceil(a.count * 0.6))
         chosen = select(good, a.count, per_source)
+        dropped = set()
+        for _ in range(0 if a.no_jev else 3):  # Jev gate before render; refill from the remaining pool
+            kept = jev_gate.gate(chosen)
+            bad = [c for c in chosen if c not in kept]
+            if not bad:
+                break
+            dropped |= {id(c) for c in bad}
+            log("jev dropped " + "; ".join(f"{c['source']}@{c['start']:.0f} ({', '.join(c['jev']['why'])})" for c in bad))
+            chosen = select([c for c in good if id(c) not in dropped], a.count, per_source)
+    if a.picks and chosen and not a.no_jev:
+        chosen = jev_gate.gate(chosen)  # editor picks are scored and flagged, never dropped
     if not chosen:
         log("no candidate passed the bar; no batch today"); return
     day_dir.mkdir(exist_ok=True)
@@ -1037,6 +1070,10 @@ def main():
         credit_line = f"{desc} Source: NASA. Not endorsed by NASA."
         notes = [fr["note"], f"cut {r['cut_seconds']} s of dead air", f"{c['wps']} words/s",
                  f"loudness {q['lufs']} LUFS", "auto QA pass" if q["pass"] else "AUTO QA FAIL"] + c["notes"]
+        if c.get("jev"):
+            J = c["jev"]
+            notes.append(f"jev text-only hook {J['hook']} / complete {J['whole']} / formulaic wording {J['slop']} / desc {J['desc']}; visual quality unverified"
+                         + ("" if J["pass"] else " FLAG: " + ", ".join(J["why"])))
         if c["llm"]:
             notes.append(f"llm hook {L['hook']:.0f} / standalone {L['standalone']:.0f} / interest {L['interest']:.0f}")
         items.append({"id": cid, "file": out.name, "cover": f"{cid}-cover.jpg", "duration": q["duration"],
@@ -1045,7 +1082,7 @@ def main():
                       "source_url": s["url"], "source_start": round(c["start"], 2), "source_end": round(c["end"], 2),
                       "source_range": f"{fmt_ts(c['start'])}-{fmt_ts(c['end'])}", "rights_basis": s["rights"],
                       "transcript": c["text"], "framing": [(round(x["a"], 2), round(x["b"], 2), x["mode"]) for x in fr["shots"]], "qa": q, "quality_notes": notes,
-                      "score": round(c["final"], 2), "status": "prepared, not published", "selection": "editor" if c.get("copy") else "auto"})
+                      "score": round(c["final"], 2), "status": "prepared, not published", "selection": "editor" if c.get("copy") else "auto", "jev": c.get("jev")})
         used["entries"].append({"date": day, "id": cid, "source": s["id"], "start": round(c["start"], 2),
                                 "end": round(c["end"], 2), "status": "batch"})
         log(f"{cid} ok {q['duration']} s {'/'.join(x['mode'] for x in fr['shots'])} lufs={q['lufs']} :: {c['hook'][:70]}")
