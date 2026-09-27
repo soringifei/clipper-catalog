@@ -1,0 +1,61 @@
+{
+  "_note": "Only sources Sorin may legally clip. enabled=false keeps a source out of every batch; the reason field says why. Rights text is copied into captions.json for every clip.",
+  "sources": [
+    {
+      "id": "crippen-sts1",
+      "path": "../sources-master4/crippen-sts1.mp4",
+      "enabled": true,
+      "title": "First Space Shuttle Flight - Astronaut Bob Crippen on the legacy of STS-1 & Columbia (Rocket Ranch)",
+      "nasa_id": "KSC-20210407-VP-CDC001-001-ROCKETRAUNCH-CRIPPEN-3269056",
+      "url": "https://images.nasa.gov/details/KSC-20210407-VP-CDC001-001-ROCKETRAUNCH-CRIPPEN-3269056",
+      "producer": "NASA Kennedy Space Center (Rocket Ranch podcast), 2021-04-07",
+      "credit": "Footage: NASA",
+      "rights": "NASA-produced media from images.nasa.gov (NASA KSC). NASA content is generally not subject to U.S. copyright (17 U.S.C. 105; NASA media guidelines). No NASA logo/insignia shown, no endorsement implied; identifiable person (Bob Crippen) shown only in editorial context. Credit: NASA.",
+      "speakers": "STS-1 pilot Bob Crippen answers questions from a NASA Rocket Ranch podcast host. Questions and some long comments come from the host, not Crippen. Speaker rule: name Crippen only for what he says; if the excerpt is mostly the host talking, fill reject_reason",
+      "lang": "en",
+      "asr_fixes": {"SDS": "STS", "Crippin": "Crippen"},
+      "skip_head": 45,
+      "skip_tail": 45
+    },
+    {
+      "id": "dyson-williams-swe",
+      "path": "../sources-master4/dyson-williams-swe.mp4",
+      "enabled": true,
+      "title": "NASA Astronauts Dyson and Williams Talk with Society of Women Engineers (2024-08-06)",
+      "nasa_id": "iss071m262191509_Expedition71_NASA_Astronauts_Dyson_and_Williams_Talk_with_Society_of_Women_Engineers_240806",
+      "url": "https://images.nasa.gov/details/iss071m262191509_Expedition71_NASA_Astronauts_Dyson_and_Williams_Talk_with_Society_of_Women_Engineers_240806",
+      "producer": "NASA Johnson Space Center, ISS in-flight event, 2024-08-06",
+      "credit": "Footage: NASA",
+      "rights": "NASA-produced media from images.nasa.gov (NASA JSC, ISS in-flight event). NASA content is generally not subject to U.S. copyright (17 U.S.C. 105; NASA media guidelines). NASA meatball patches on flight shirts are incidental; no logo used as branding, no endorsement implied; astronauts Tracy Dyson and Suni Williams shown only in editorial context. Credit: NASA.",
+      "speakers": "Two NASA astronauts aboard the ISS, Tracy Dyson and Suni Williams, share one microphone and answer questions from a Society of Women Engineers moderator. Speaker rule: you cannot tell which astronaut is talking, so never name the speaker; write 'A NASA astronaut on the ISS' or 'Astronauts on the ISS'. If the excerpt is mostly the moderator talking, fill reject_reason",
+      "lang": "en",
+      "asr_fixes": {"Sonny": "Suni", "Sunny": "Suni", "Sunni": "Suni"},
+      "skip_head": 60,
+      "skip_tail": 30
+    },
+    {
+      "id": "rocketranch8",
+      "path": "../sources-master4/rocketranch8.mp4",
+      "enabled": false,
+      "reason": "Audio-only podcast over a static Rocket Ranch title card that shows the NASA insignia; no on-camera subject to frame and the insignia may not be reused as decoration. Rights are fine (NASA KSC, public domain) but the visual fails the quality bar.",
+      "title": "Rocket Ranch 8",
+      "nasa_id": "KSC-20190531-PC-MMS01_0001-RocketRanch8_3223236",
+      "url": "https://images.nasa.gov/details/KSC-20190531-PC-MMS01_0001-RocketRanch8_3223236",
+      "credit": "Audio: NASA",
+      "rights": "NASA-produced (KSC).",
+      "lang": "en"
+    },
+    {
+      "id": "hwhap136",
+      "path": "../sources-master4/hwhap136.mp4",
+      "enabled": false,
+      "reason": "Incomplete download (ffprobe: moov atom not found); file cannot be decoded. Re-download from images.nasa.gov before enabling.",
+      "title": "Houston We Have a Podcast Episode 136 (live, Be a NASA Astronaut)",
+      "nasa_id": "iss062m260661829-HWHAP_Live_Podcast_Episode_136_Be_a_NASA_Astronaut_1309194",
+      "url": "https://images.nasa.gov/details/iss062m260661829-HWHAP_Live_Podcast_Episode_136_Be_a_NASA_Astronaut_1309194",
+      "credit": "Footage: NASA",
+      "rights": "NASA-produced (JSC).",
+      "lang": "en"
+    }
+  ]
+}
