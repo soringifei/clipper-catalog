@@ -1,2 +1,12 @@
 config.bat
 node_modules
+
+# HookHaus daily pipeline: rendered batches, caches and run state stay local
+clipper/daily/*/
+!clipper/daily/picks/
+clipper/daily/_*
+clipper/daily/used.json
+clipper/daily/daily.log
+clipper/daily/**/*.mp4
+clipper/daily/**/*.jpg
+clipper/daily/**/*.png
