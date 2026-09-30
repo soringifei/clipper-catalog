@@ -886,7 +886,7 @@ def board_task(day, n, day_dir):
                f"Drepturile, continutul si calitatea vizuala necesita verificare independenta; nimic nu este publicat.")
     r = run([sys.executable.replace("pythonw", "python"), str(cli), "create", "--id", tid, "--title", f"HookHaus: aprobare publicare {day}",
              "--owner", "sorin", "--status", "blocked", "--blocker", blocker,
-             "--next-action", f"Deschide {day_dir / 'review.html'} si alege A/B/C; postarea o face pasul de publicare doar dupa aprobare.",
+             "--next-action", f"Revizuieste {day_dir / 'review.html'}: verifica sursa, drepturile, continutul si calitatea; nimic nu este aprobat pentru publicare.",
              "--provenance", f"make_daily.py batch {day}: {n} clips, captions.json in {day_dir}"], check=False)
     if r.returncode != 0:
         log(f"board create {tid}: {(r.stderr or r.stdout).strip()[:300]}")

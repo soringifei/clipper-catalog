@@ -32,9 +32,6 @@ class GateTests(unittest.TestCase):
         self.assertEqual(c["jev_status"], "UNVERIFIED")
 
     def test_injected_backend_also_requires_provenance(self):
-        with self.assertRaises(AssertionError):
-            # A control that proves this fixture would fail if it were invoked.
-            (lambda: (_ for _ in ()).throw(AssertionError()))()
         c = candidate()
         self.assertEqual(jev_gate.gate([c], evaluate=lambda *a: self.fail("private text sent")), [c])
 
