@@ -1,0 +1,39 @@
+/* HookHaus brand v2 (Ink / Lime / Orange, Inter) - see brand/BRAND.md. Max two accents per frame. */
+@font-face{font-family:'Inter Display';src:url(fonts/InterDisplay-Black.otf) format('opentype');font-weight:900;font-style:normal;font-display:swap}
+@font-face{font-family:'Inter';src:url(fonts/Inter-Regular.otf) format('opentype');font-weight:400 600;font-style:normal;font-display:swap}
+@font-face{font-family:'Inter';src:url(fonts/Inter-Bold.otf) format('opentype');font-weight:700 900;font-style:normal;font-display:swap}
+body{font-family:var(--sans)}
+h1,h2,.card-title,.cover-headline,.stage-name,.brand-text strong{font-family:var(--display);font-weight:900}
+.brand{gap:.8rem}
+.brand-logo{width:44px;height:44px;flex:0 0 auto;transition:transform .35s cubic-bezier(.22,1,.36,1)}
+.brand:hover .brand-logo,.brand:focus-visible .brand-logo{transform:rotate(-10deg) scale(1.06)}
+.brand-text{display:flex;flex-direction:column;gap:.25rem;font-size:1rem;letter-spacing:-.02em;line-height:1}
+.brand-text strong{font-size:1.45rem;letter-spacing:-.04em;font-weight:900}
+.brand-text strong i{font-style:normal;color:var(--accent)}
+.brand-text small{font-family:var(--mono);font-size:.58rem;letter-spacing:.14em;color:var(--dim);font-weight:400}
+.eyebrow{color:var(--accent)}
+.site-nav a{font-weight:600}
+.site-nav a:last-child{background:var(--accent);color:#111113;padding:.55rem 1rem;border-radius:999px;font-weight:700}
+.site-nav a:last-child:hover{background:#fff;color:#111113}
+.intro h1{letter-spacing:-.035em;line-height:.9}
+.intro h1 em{display:inline-block;background:var(--accent);color:#111113;padding:0 .12em .04em;border-radius:.08em;transform:rotate(-1.5deg);margin-top:.12em}
+.work-count{display:inline-block;background:var(--accent);color:#111113;padding:.15em .55em;border-radius:999px;transform:rotate(-4deg);margin-left:.6em;font-weight:700}
+.work-head-copy h2 em{font-style:normal;color:var(--accent)}
+.contact-section h2{letter-spacing:-.035em}
+.reel-cta,.contact-section a{color:var(--accent)}
+.reel{border-radius:18px;border-color:rgba(255,255,255,.18)}
+.stage-bar{background:var(--hook)}
+.tick.is-on{background:var(--accent)}
+.device-frame{box-shadow:0 0 0 1px rgba(255,255,255,.14),0 40px 90px -20px rgba(0,0,0,.75),0 0 120px -30px rgba(198,255,61,.3)}
+.stage-num{color:var(--hook)}
+.hook-dot{color:var(--hook)}
+@media (prefers-reduced-motion:reduce){.brand-logo,.brand:hover .brand-logo{transition:none;transform:none}}
+
+.work-head-copy h2{letter-spacing:-.025em}
+@media (max-width:620px){.site-header{gap:.6rem;padding-inline:1rem}.brand-logo{width:36px;height:36px}.brand-text strong{font-size:1.2rem}.brand-text small{display:none}.site-nav{gap:.7rem}.site-nav a:nth-child(1){display:none}.site-nav a:last-child{padding:.5rem .8rem}}
+
+.credits-main h1{letter-spacing:-.04em}
+.credits-main h2,.credits-main h3{letter-spacing:-.03em;font-family:var(--display)}
+body .credits-main h1{letter-spacing:-.035em}
+body .credits-main h2,body .credits-main h3{letter-spacing:-.025em}
+body .credit-item h2{letter-spacing:-.025em}
