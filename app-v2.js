@@ -57,7 +57,7 @@
     const t = el('span', 'tick'); ticks.appendChild(t); tickEls.push(t);
   });
   const hit = el('button', 'device-hit'); hit.type = 'button';
-  const chip = el('span', 'device-chip', 'Watch with sound'); hit.appendChild(chip);
+  const chip = el('span', 'device-chip', 'Watch edit'); hit.appendChild(chip);
   hit.addEventListener('click', () => openProject(projects[Math.max(active, 0)], hit));
   frame.appendChild(hit);
 
@@ -67,7 +67,7 @@
     list.style.setProperty('--i', i);
     rows.forEach((r, k) => { r.classList.toggle('is-active', k === i); r.setAttribute('aria-current', k === i ? 'true' : 'false'); });
     tickEls.forEach((t, k) => t.classList.toggle('is-on', k <= i));
-    hit.setAttribute('aria-label', 'Watch ' + projects[i].title + ' with sound');
+    hit.setAttribute('aria-label', 'Watch ' + projects[i].title + ' visual study');
     clearTimeout(pauseTimer);
     const v = vids[i];
     if (!v.getAttribute('src')) v.src = projects[i].video;
