@@ -1,0 +1,392 @@
+{
+  "revision": "20261015-edit-2",
+  "date": "2026-10-15",
+  "edits": [
+    {
+      "file": "coffee-ritual-spec.mp4",
+      "sha256": "f358a5af2dca3f01fc396d9c23aa74a287134cf60847c3b45374504333ed12fb",
+      "size": [
+        1080,
+        1920
+      ],
+      "shots": [
+        {
+          "source": "https://mixkit.co/free-stock-video/coffee-beans-texture-42944/",
+          "source_sha256": "2345d1fcd8f224c6fb9459e3619c6303189c51bcd6a87a7186429f897b71ba44",
+          "start": 0.8,
+          "duration": 1.16,
+          "processing": "",
+          "license": "Mixkit Stock Video Free License",
+          "license_url": "https://mixkit.co/license/modal/videoFree/"
+        },
+        {
+          "source": "https://mixkit.co/free-stock-video/pouring-coffee-grounds-into-a-chemex-filter-100343/",
+          "source_sha256": "23cf13aeab55ad18004963ce07c616569d851187de8f1c0a79e13b792ec2fb91",
+          "start": 3,
+          "duration": 1.75,
+          "processing": "",
+          "license": "Mixkit Stock Video Free License",
+          "license_url": "https://mixkit.co/license/modal/videoFree/"
+        },
+        {
+          "source": "https://mixkit.co/free-stock-video/pouring-water-over-coffee-grounds-in-filter-brewer-100345/",
+          "source_sha256": "87f35cd197e9652f9012c78eaf2d6783e12bee10cd6d7dabae89771841b936a1",
+          "start": 4,
+          "duration": 3.495,
+          "processing": "",
+          "license": "Mixkit Stock Video Free License",
+          "license_url": "https://mixkit.co/license/modal/videoFree/"
+        },
+        {
+          "source": "https://mixkit.co/free-stock-video/close-up-of-a-woman-blowing-on-coffee-43268/",
+          "source_sha256": "07b15e6f010ee3bc0f194a87be0d2b1ffe72e5b1b3ed06cb1fab3d528bbe31e6",
+          "start": 6,
+          "duration": 2.915,
+          "processing": "",
+          "license": "Mixkit Stock Video Free License",
+          "license_url": "https://mixkit.co/license/modal/videoFree/"
+        }
+      ],
+      "music": {
+        "title": "Backed Vibes (clean)",
+        "composer": "Kevin MacLeod",
+        "source": "https://incompetech.com/music/royalty-free/index.html?isrc=USUAN1100479",
+        "license": "https://creativecommons.org/licenses/by/4.0/",
+        "start": 0,
+        "duration": 9.32,
+        "target_lufs": -17,
+        "fade_in": 0.08,
+        "fade_out": 0.8,
+        "attribution": "\"Backed Vibes (clean)\" Kevin MacLeod (incompetech.com). Licensed under Creative Commons Attribution 4.0: https://creativecommons.org/licenses/by/4.0/ . Source: https://incompetech.com/music/royalty-free/index.html?isrc=USUAN1100479. Edited excerpt; fades and level adjustment."
+      }
+    },
+    {
+      "file": "earth-systems-study.mp4",
+      "sha256": "faabb066edc204602cf7194ee91150d813be127bed513570a349435c1897dd1b",
+      "size": [
+        1080,
+        1920
+      ],
+      "shots": [
+        {
+          "source": "https://svs.gsfc.nasa.gov/31365/",
+          "source_sha256": "651cb84851000585edb6e86be82f476822a02634baa9eb7ec3309f0d182ab32d",
+          "start": 2,
+          "duration": 3,
+          "processing": "drawbox=0:0:iw:250:black:t=fill,",
+          "license": "NASA SVS public-domain reuse guidance",
+          "license_url": "https://svs.gsfc.nasa.gov/help/"
+        },
+        {
+          "source": "https://svs.gsfc.nasa.gov/31365/",
+          "source_sha256": "651cb84851000585edb6e86be82f476822a02634baa9eb7ec3309f0d182ab32d",
+          "start": 29,
+          "duration": 3,
+          "processing": "drawbox=0:0:iw:250:black:t=fill,",
+          "license": "NASA SVS public-domain reuse guidance",
+          "license_url": "https://svs.gsfc.nasa.gov/help/"
+        },
+        {
+          "source": "https://svs.gsfc.nasa.gov/31365/",
+          "source_sha256": "651cb84851000585edb6e86be82f476822a02634baa9eb7ec3309f0d182ab32d",
+          "start": 56,
+          "duration": 3,
+          "processing": "drawbox=0:0:iw:250:black:t=fill,",
+          "license": "NASA SVS public-domain reuse guidance",
+          "license_url": "https://svs.gsfc.nasa.gov/help/"
+        },
+        {
+          "source": "https://svs.gsfc.nasa.gov/31365/",
+          "source_sha256": "651cb84851000585edb6e86be82f476822a02634baa9eb7ec3309f0d182ab32d",
+          "start": 83,
+          "duration": 3,
+          "processing": "drawbox=0:0:iw:250:black:t=fill,",
+          "license": "NASA SVS public-domain reuse guidance",
+          "license_url": "https://svs.gsfc.nasa.gov/help/"
+        },
+        {
+          "source": "https://svs.gsfc.nasa.gov/31365/",
+          "source_sha256": "651cb84851000585edb6e86be82f476822a02634baa9eb7ec3309f0d182ab32d",
+          "start": 10,
+          "duration": 3,
+          "processing": "drawbox=0:0:iw:250:black:t=fill,drawbox=0:1450:iw:470:black:t=fill,",
+          "license": "NASA SVS public-domain reuse guidance",
+          "license_url": "https://svs.gsfc.nasa.gov/help/"
+        }
+      ],
+      "music": {
+        "title": "Infinite Perspective",
+        "composer": "Kevin MacLeod",
+        "source": "https://incompetech.com/music/royalty-free/index.html?isrc=USUAN1500024",
+        "license": "https://creativecommons.org/licenses/by/4.0/",
+        "start": 20,
+        "duration": 15,
+        "target_lufs": -17,
+        "fade_in": 0.08,
+        "fade_out": 0.8,
+        "attribution": "\"Infinite Perspective\" Kevin MacLeod (incompetech.com). Licensed under Creative Commons Attribution 4.0: https://creativecommons.org/licenses/by/4.0/ . Source: https://incompetech.com/music/royalty-free/index.html?isrc=USUAN1500024. Edited excerpt; fades and level adjustment."
+      }
+    },
+    {
+      "file": "game-day.mp4",
+      "sha256": "3491f1e8e27e52464bc2c9c1ed79164cde75c8d384153af1dff9e17f3cd365c7",
+      "size": [
+        1920,
+        1080
+      ],
+      "shots": [
+        {
+          "source": "https://mixkit.co/free-stock-video/soccer-freestyler-juggling-the-ball-very-skillfully-43501/",
+          "source_sha256": "b8ac73a766560bd30ea4a9d15bb9af993dd6ac09f71b72e7a72f29b42de899d7",
+          "start": 0.6,
+          "duration": 2.2,
+          "processing": "",
+          "license": "Mixkit Stock Video Free License",
+          "license_url": "https://mixkit.co/license/modal/videoFree/"
+        },
+        {
+          "source": "https://mixkit.co/free-stock-video/player-dribbling-in-a-one-on-one-in-a-soccer-43484/",
+          "source_sha256": "fce7e413adce9a2b03f6cdd48b6c38b2565ea9468399bd7869b54755f7ae91d0",
+          "start": 0.1,
+          "duration": 2.7,
+          "processing": "",
+          "license": "Mixkit Stock Video Free License",
+          "license_url": "https://mixkit.co/license/modal/videoFree/"
+        },
+        {
+          "source": "https://mixkit.co/free-stock-video/goal-play-in-a-semi-professional-soccer-game-43499/",
+          "source_sha256": "9bf4d73afba562517d99882eb5b5f3b8d75e941c6e6723dfbdc3fa0f08a030da",
+          "start": 0.1,
+          "duration": 7.93,
+          "processing": "",
+          "license": "Mixkit Stock Video Free License",
+          "license_url": "https://mixkit.co/license/modal/videoFree/"
+        }
+      ],
+      "music": {
+        "title": "Cut and Run",
+        "composer": "Kevin MacLeod",
+        "source": "https://incompetech.com/music/royalty-free/index.html?isrc=USUAN1100851",
+        "license": "https://creativecommons.org/licenses/by/4.0/",
+        "start": 16,
+        "duration": 12.83,
+        "target_lufs": -15,
+        "fade_in": 0.08,
+        "fade_out": 0.8,
+        "attribution": "\"Cut and Run\" Kevin MacLeod (incompetech.com). Licensed under Creative Commons Attribution 4.0: https://creativecommons.org/licenses/by/4.0/ . Source: https://incompetech.com/music/royalty-free/index.html?isrc=USUAN1100851. Edited excerpt; fades and level adjustment."
+      }
+    },
+    {
+      "file": "room-with-a-view.mp4",
+      "sha256": "3777acbb43b80c3e379042011b6d6d4f2019158c9a3e3abdcb87f524a4e12699",
+      "size": [
+        1920,
+        1080
+      ],
+      "shots": [
+        {
+          "source": "https://mixkit.co/free-stock-video/interior-of-a-room-with-terrace-4029/",
+          "source_sha256": "c0b238e8459ded22596b88ad91cc95d459d5b9941d8952a9f56fb5f521e278b1",
+          "start": 0.5,
+          "duration": 2.5,
+          "processing": "",
+          "license": "Mixkit Stock Video Free License",
+          "license_url": "https://mixkit.co/license/modal/videoFree/"
+        },
+        {
+          "source": "https://mixkit.co/free-stock-video/interior-of-a-room-with-terrace-4029/",
+          "source_sha256": "c0b238e8459ded22596b88ad91cc95d459d5b9941d8952a9f56fb5f521e278b1",
+          "start": 3,
+          "duration": 2.5,
+          "processing": "crop=1440:810:0:170,",
+          "license": "Mixkit Stock Video Free License",
+          "license_url": "https://mixkit.co/license/modal/videoFree/"
+        },
+        {
+          "source": "https://mixkit.co/free-stock-video/interior-of-a-room-with-terrace-4029/",
+          "source_sha256": "c0b238e8459ded22596b88ad91cc95d459d5b9941d8952a9f56fb5f521e278b1",
+          "start": 26,
+          "duration": 4.32,
+          "processing": "",
+          "license": "Mixkit Stock Video Free License",
+          "license_url": "https://mixkit.co/license/modal/videoFree/"
+        }
+      ],
+      "music": {
+        "title": "Clean Soul",
+        "composer": "Kevin MacLeod",
+        "source": "https://incompetech.com/music/royalty-free/index.html?isrc=USUAN1300033",
+        "license": "https://creativecommons.org/licenses/by/4.0/",
+        "start": 8,
+        "duration": 9.32,
+        "target_lufs": -18,
+        "fade_in": 0.08,
+        "fade_out": 0.8,
+        "attribution": "\"Clean Soul\" Kevin MacLeod (incompetech.com). Licensed under Creative Commons Attribution 4.0: https://creativecommons.org/licenses/by/4.0/ . Source: https://incompetech.com/music/royalty-free/index.html?isrc=USUAN1300033. Edited excerpt; fades and level adjustment."
+      }
+    },
+    {
+      "file": "after-dark.mp4",
+      "sha256": "44c5c590d2b80fe87a541593371cca0c660a74c65dcb0d5a9da3928882f4b404",
+      "size": [
+        1920,
+        1080
+      ],
+      "shots": [
+        {
+          "source": "https://mixkit.co/free-stock-video/movement-in-a-city-at-night-in-an-aerial-shot-42343/",
+          "source_sha256": "478379ac89a4bc5cc5e902dc48e34a403e4c6edd59c21671ec6a6c600c731bc8",
+          "start": 1.5,
+          "duration": 2.25,
+          "processing": "",
+          "license": "Mixkit Stock Video Free License",
+          "license_url": "https://mixkit.co/license/modal/videoFree/"
+        },
+        {
+          "source": "https://mixkit.co/free-stock-video/movement-in-a-city-at-night-in-an-aerial-shot-42343/",
+          "source_sha256": "478379ac89a4bc5cc5e902dc48e34a403e4c6edd59c21671ec6a6c600c731bc8",
+          "start": 11,
+          "duration": 3.75,
+          "processing": "",
+          "license": "Mixkit Stock Video Free License",
+          "license_url": "https://mixkit.co/license/modal/videoFree/"
+        },
+        {
+          "source": "https://mixkit.co/free-stock-video/movement-in-a-city-at-night-in-an-aerial-shot-42343/",
+          "source_sha256": "478379ac89a4bc5cc5e902dc48e34a403e4c6edd59c21671ec6a6c600c731bc8",
+          "start": 22,
+          "duration": 3,
+          "processing": "",
+          "license": "Mixkit Stock Video Free License",
+          "license_url": "https://mixkit.co/license/modal/videoFree/"
+        }
+      ],
+      "music": {
+        "title": "Impact Prelude",
+        "composer": "Kevin MacLeod",
+        "source": "https://incompetech.com/music/royalty-free/index.html?isrc=USUAN1100617",
+        "license": "https://creativecommons.org/licenses/by/4.0/",
+        "start": 8,
+        "duration": 9.0,
+        "target_lufs": -16,
+        "fade_in": 0.08,
+        "fade_out": 0.8,
+        "attribution": "\"Impact Prelude\" Kevin MacLeod (incompetech.com). Licensed under Creative Commons Attribution 4.0: https://creativecommons.org/licenses/by/4.0/ . Source: https://incompetech.com/music/royalty-free/index.html?isrc=USUAN1100617. Edited excerpt; fades and level adjustment."
+      }
+    },
+    {
+      "file": "order-up.mp4",
+      "sha256": "25b30b4394849d39df2a6bce00888582181689a1d28b18ac281de3635d750429",
+      "size": [
+        1920,
+        1080
+      ],
+      "shots": [
+        {
+          "source": "https://mixkit.co/free-stock-video/burger-being-prepared-with-french-fries-3533/",
+          "source_sha256": "93361e5aa4c0e2a56c30995f87ae769a35a5de0292d6444148a260ce6c173d61",
+          "start": 0.6,
+          "duration": 1.78,
+          "processing": "",
+          "license": "Mixkit Stock Video Free License",
+          "license_url": "https://mixkit.co/license/modal/videoFree/"
+        },
+        {
+          "source": "https://mixkit.co/free-stock-video/burger-being-prepared-with-french-fries-3533/",
+          "source_sha256": "93361e5aa4c0e2a56c30995f87ae769a35a5de0292d6444148a260ce6c173d61",
+          "start": 3,
+          "duration": 2.37,
+          "processing": "",
+          "license": "Mixkit Stock Video Free License",
+          "license_url": "https://mixkit.co/license/modal/videoFree/"
+        },
+        {
+          "source": "https://mixkit.co/free-stock-video/burgers-in-great-detail-3538/",
+          "source_sha256": "f7aec76e5a3ca576f8f37f3ca825e262e7b9450cfb0333ea3d0310105e9a38d6",
+          "start": 8,
+          "duration": 1.78,
+          "processing": "",
+          "license": "Mixkit Stock Video Free License",
+          "license_url": "https://mixkit.co/license/modal/videoFree/"
+        },
+        {
+          "source": "https://mixkit.co/free-stock-video/pair-of-hamburgers-together-3536/",
+          "source_sha256": "30f7167679b465d42f95a444b70775ccf9edc3071d368477dbaf0b2776693ee7",
+          "start": 1,
+          "duration": 3.57,
+          "processing": "",
+          "license": "Mixkit Stock Video Free License",
+          "license_url": "https://mixkit.co/license/modal/videoFree/"
+        }
+      ],
+      "music": {
+        "title": "Funkorama",
+        "composer": "Kevin MacLeod",
+        "source": "https://incompetech.com/music/royalty-free/index.html?isrc=USUAN1100474",
+        "license": "https://creativecommons.org/licenses/by/4.0/",
+        "start": 8,
+        "duration": 9.5,
+        "target_lufs": -16,
+        "fade_in": 0.08,
+        "fade_out": 0.8,
+        "attribution": "\"Funkorama\" Kevin MacLeod (incompetech.com). Licensed under Creative Commons Attribution 4.0: https://creativecommons.org/licenses/by/4.0/ . Source: https://incompetech.com/music/royalty-free/index.html?isrc=USUAN1100474. Edited excerpt; fades and level adjustment."
+      }
+    }
+  ],
+  "showreel": {
+    "file": "showreel.mp4",
+    "sha256": "d156574e0ddc82a5624a1946170b4177ffadfc46dcb37d0b625102feca3686ac",
+    "scenes": [
+      [
+        "order-up",
+        [
+          6.0
+        ],
+        "FOOD / MENU MONTAGE"
+      ],
+      [
+        "coffee-ritual-spec",
+        [
+          0,
+          2.7,
+          6.32
+        ],
+        "PRODUCT / COFFEE RITUAL"
+      ],
+      [
+        "game-day",
+        [
+          8.5
+        ],
+        "SPORT / GAME DAY"
+      ],
+      [
+        "room-with-a-view",
+        [
+          5.8
+        ],
+        "INTERIORS / ROOM WITH A VIEW"
+      ],
+      [
+        "after-dark",
+        [
+          6
+        ],
+        "CITY / AFTER DARK"
+      ],
+      [
+        "earth-systems-study",
+        [
+          0,
+          4,
+          8
+        ],
+        "VISUAL STORY / EARTH SYSTEMS"
+      ]
+    ],
+    "music": "\"Funkorama\" Kevin MacLeod (incompetech.com). Licensed under Creative Commons Attribution 4.0: https://creativecommons.org/licenses/by/4.0/ . Source: https://incompetech.com/music/royalty-free/index.html?isrc=USUAN1100474. Edited excerpt; fades and level adjustment.",
+    "music_start": 16,
+    "duration": 18
+  },
+  "no_client_endorsement": true
+}

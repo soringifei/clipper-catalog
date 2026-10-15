@@ -74,3 +74,8 @@
   .device-video{transform:none}
 }
 
+
+/* Preserve full action and spatial context in native landscape studies. */
+@media(min-width:900px){.stage-device.is-landscape{height:auto;width:min(43vw,760px);aspect-ratio:16/9}}
+.stage-device.is-landscape .device-video{object-fit:contain}
+@media(max-width:899.98px){.rail{align-items:center}.rail-card.is-landscape{aspect-ratio:16/9}.rail-card.is-landscape img,.rail-card.is-landscape .rail-video{object-fit:contain}.rail-card.is-landscape .rail-cap{padding:28px 10px 10px}.rail-card.is-landscape .rail-cap strong{font-size:.9rem}.rail-card.is-landscape .rail-cap small{font-size:.55rem}}

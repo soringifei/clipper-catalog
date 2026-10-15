@@ -23,6 +23,8 @@
     const f = $('viewer-file'); f.href = p.video;
     vvideo.poster = p.poster || '';
     vvideo.src = p.video;
+    vvideo.style.aspectRatio = p.aspect || '9/16';
+    vvideo.style.width = p.aspect === '16/9' ? '100%' : 'auto';
     if (!viewer.open) viewer.showModal();
     vvideo.currentTime = 0;
     const pr = vvideo.play(); if (pr && pr.catch) pr.catch(() => {});
@@ -64,6 +66,7 @@
   function setActive(i) {
     if (i === active) return;
     active = i;
+    $('stage-device').classList.toggle('is-landscape', projects[i].aspect === '16/9');
     list.style.setProperty('--i', i);
     rows.forEach((r, k) => { r.classList.toggle('is-active', k === i); r.setAttribute('aria-current', k === i ? 'true' : 'false'); });
     tickEls.forEach((t, k) => t.classList.toggle('is-on', k <= i));
@@ -110,7 +113,7 @@
     rail.textContent = '';
     projects.forEach(p => {
       const li = el('li', 'rail-item');
-      const b = el('button', 'rail-card'); b.type = 'button'; b.setAttribute('aria-label', 'Watch ' + p.title);
+      const b = el('button', 'rail-card'); b.classList.toggle('is-landscape', p.aspect === '16/9'); b.type = 'button'; b.setAttribute('aria-label', 'Watch ' + p.title);
       const img = el('img'); img.src = p.cover || p.poster; img.alt = ''; img.loading = 'lazy';
       const v = el('video', 'rail-video'); v.muted = true; v.loop = true; v.playsInline = true; v.preload = 'none'; v.setAttribute('aria-hidden', 'true');
       const cap = el('span', 'rail-cap'); cap.append(el('strong', '', p.title), el('small', '', p.category + ' / ' + p.duration));
