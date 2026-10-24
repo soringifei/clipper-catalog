@@ -1,0 +1,10 @@
+player_name: unknown        # set your name for overlays/captions
+team_name: Bucharest Rebels
+player_number: 52
+position: Middle Linebacker
+position_short: MLB
+reference_images_dir: reference_player_52
+team_kit_notes: ""          # e.g. "black jersey, white numbers"
+# Optional HSV hints for Rebels kit (filled after tuning on game_001)
+team_kit_hsv: null
+music_file: ""              # only a local file you hold the rights to
