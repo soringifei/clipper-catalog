@@ -40,13 +40,23 @@
     .credits-main{max-width:1380px;padding-top:clamp(2rem,4vw,3.5rem)}
     body .credits-main h1{font-size:clamp(2.7rem,6vw,5.5rem);max-width:13ch;line-height:.98;margin:.6rem 0 1rem}
     .credits-intro{font-size:1.05rem;max-width:56ch}
-    .preview-strip{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:clamp(.5rem,1.4vw,1.2rem);margin:2rem 0 .7rem}
-    .preview-tile{min-width:0;margin:0}
-    .preview-tile video{display:block;width:100%;aspect-ratio:16/10;object-fit:cover;background:#262629;border-radius:8px}
-    .preview-tile figcaption{display:flex;justify-content:space-between;gap:.4rem;padding:.55rem 0;color:var(--ink);font-size:.85rem;line-height:1.25}
-    .preview-tile figcaption span{color:var(--muted);white-space:nowrap}
-    .preview-caption{font-size:.8rem;color:var(--muted);margin:.2rem 0 1.6rem}
-    .motion-toggle{font:inherit;font-size:.8rem;color:var(--ink);background:transparent;border:1px solid #777;border-radius:4px;padding:.35rem .65rem;margin:0 0 1rem;cursor:pointer}
+    .comparisons{margin:1.5rem 0 1rem}
+    .comparison{padding:1.25rem 0 1.7rem;border-top:1px solid var(--line)}
+    .comparison-heading{display:flex;align-items:baseline;justify-content:space-between;gap:1rem;margin:0 0 .8rem}
+    body .credits-main .comparison h2{font:700 clamp(1.15rem,2.2vw,1.55rem)/1.2 var(--sans);letter-spacing:-.02em;text-transform:none;margin:0}
+    .comparison-heading span{font-size:.78rem;color:var(--muted)}
+    .comparison-pair{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:clamp(.5rem,1.2vw,1rem);max-width:1040px}
+    .comparison-tile{min-width:0;margin:0}
+    .comparison-tile video{display:block;width:100%;height:auto;aspect-ratio:16/9;object-fit:cover;background:#262629;border-radius:6px}
+    .comparison-pair--portrait{grid-template-columns:minmax(0,1fr) minmax(0,.316fr)}
+    .comparison-pair--portrait .comparison-tile:last-child video{aspect-ratio:9/16}
+    .comparison-tile figcaption{display:flex;align-items:baseline;gap:.6rem;flex-wrap:wrap;padding:0 0 .55rem;color:var(--ink);font-size:.9rem;line-height:1.3}
+    .comparison-tile figcaption strong{font-size:.75rem;text-transform:uppercase;letter-spacing:.06em}
+    .comparison-tile figcaption span{color:var(--muted);font-size:.8rem}
+    .comparison-tile:last-child figcaption strong{color:var(--accent)}
+    .comparison-side-note{margin:.55rem 0 0;color:var(--muted);font-size:.8rem;line-height:1.4}
+    .comparison-note{margin:.3rem 0 0;color:var(--muted);font-size:.85rem;max-width:75ch}
+    .motion-toggle{font:inherit;font-size:.8rem;color:var(--ink);background:transparent;border:1px solid #777;border-radius:4px;padding:.35rem .65rem;margin:1.25rem 0 0;cursor:pointer}
     .motion-toggle:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
     .credits-nav{border-top:1px solid var(--line);border-bottom:1px solid var(--line);padding:.8rem 0;margin:1.5rem 0 3.5rem}
     .credits-group{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));align-items:start;gap:1rem;margin-top:4rem}
@@ -54,8 +64,8 @@
     .group-note{grid-column:1/-1;margin:0 0 .6rem}
     .credit-item{min-width:0;background:#1b1c1e;border:1px solid #37383a;border-radius:10px;padding:1.25rem;overflow:hidden;scroll-margin-top:1rem}
     .credit-item:target{border:2px solid var(--accent);padding:calc(1.25rem - 1px)}
-    .source-image{display:block;width:100%;aspect-ratio:16/9;object-fit:cover;background:#2a2b2d;border-radius:5px}
-    .source-preview{margin:0 0 1rem}.source-preview figcaption{font-size:.72rem;color:#b3b4b2;margin-top:.4rem}
+    .source-image{display:block;width:100%;height:auto;aspect-ratio:16/9;object-fit:cover;background:#2a2b2d;border-radius:5px}
+    .credit-item .source-preview{margin:-1.25rem -1.25rem 1rem}.source-preview figcaption{font-size:.72rem;color:#b3b4b2;margin-top:.4rem;padding:0 1.25rem}.source-preview .source-image{border-radius:0}
     .credit-type{font-size:.72rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--accent);margin:0 0 .45rem}
     body .credits-main .credit-item h3{font-size:clamp(1.18rem,2vw,1.5rem);line-height:1.2;margin:0 0 1rem}
     .credit-facts>div{grid-template-columns:6.2rem minmax(0,1fr);gap:.35rem .7rem;margin:.65rem 0;font-size:.88rem;line-height:1.5}
@@ -63,8 +73,7 @@
     .credit-facts dd{overflow-wrap:anywhere}
     .study-credit{line-height:1.55}
     .credits-main a:focus-visible{outline:2px solid var(--accent);outline-offset:4px}
-    @media(max-width:700px){.credits-main{padding-left:1rem;padding-right:1rem}.credits-group{grid-template-columns:1fr;margin-top:3rem}.preview-strip{gap:.4rem}.preview-tile video{aspect-ratio:4/5}.preview-tile figcaption{display:block;font-size:.72rem}.preview-tile figcaption span{display:block;margin-top:.2rem}.credit-facts>div{grid-template-columns:5.5rem minmax(0,1fr);gap:.5rem;margin:.7rem 0}.credit-facts dt{font-size:.8rem}.credit-item{padding:1rem}.credit-item:target{padding:calc(1rem - 1px)}}
-    @media(prefers-reduced-motion:reduce){.preview-tile video{visibility:visible}}
+    @media(max-width:700px){.credits-main{padding-left:1rem;padding-right:1rem}.credits-group{grid-template-columns:1fr;margin-top:3rem}.comparison-heading{display:block}.comparison-heading span{display:block;margin-top:.25rem}.comparison-pair{gap:.5rem}.comparison-pair--portrait{grid-template-columns:minmax(0,1fr) minmax(0,.72fr)}.comparison-tile figcaption{display:block;min-height:3rem}.comparison-tile figcaption span{display:block;margin-top:.25rem}.credit-facts>div{grid-template-columns:5.5rem minmax(0,1fr);gap:.5rem;margin:.7rem 0}.credit-facts dt{font-size:.8rem}.credit-item{padding:1rem}.credit-item .source-preview{margin:-1rem -1rem 1rem}.source-preview figcaption{padding:0 1rem}.credit-item:target{padding:calc(1rem - 1px)}}
 
   </style>
   <link rel="icon" type="image/svg+xml" href="favicon.svg">
@@ -80,14 +89,34 @@
     <main class="credits-main" id="credits">
       <p class="eyebrow">HookHaus / Credits</p>
       <h1>Behind the clips<span class="period">.</span></h1>
-      <p class="credits-intro">The people, original videos and music behind our edits. Watch a few of our independent studies here, then explore every source below.</p>
-      <div class="preview-strip" aria-label="Independent editing studies">
-        <figure class="preview-tile"><video muted loop playsinline preload="metadata" poster="media/coffee-ritual-spec.jpg?v=20261015-edit-2" aria-label="Coffee ritual editing study"><source src="media/coffee-ritual-spec.mp4?v=20261015-edit-2" type="video/mp4"></video><figcaption><strong>Coffee ritual</strong><span>Product</span></figcaption></figure>
-        <figure class="preview-tile"><video muted loop playsinline preload="metadata" poster="media/earth-systems-study.jpg?v=20261015-edit-2" aria-label="Four systems, one planet editing study"><source src="media/earth-systems-study.mp4?v=20261015-edit-2" type="video/mp4"></video><figcaption><strong>Four systems, one planet</strong><span>Motion</span></figcaption></figure>
-        <figure class="preview-tile"><video muted loop playsinline preload="metadata" poster="media/room-with-a-view.jpg?v=20261015-edit-2" aria-label="Room with a view editing study"><source src="media/room-with-a-view.mp4?v=20261015-edit-2" type="video/mp4"></video><figcaption><strong>Room with a view</strong><span>Property</span></figcaption></figure>
-      </div>
-      <p class="preview-caption">Independent editing studies · Full footage and music credits below</p>
+      <p class="credits-intro">See the footage we started with alongside the finished edit. Then explore the people, original videos and music behind our work.</p>
       <button class="motion-toggle" type="button" hidden>Pause previews</button>
+      <div class="comparisons" aria-label="Original footage and finished edits">
+        <section class="comparison" aria-labelledby="compare-podcast-title">
+          <div class="comparison-heading"><h2 id="compare-podcast-title">One podcast. A short-form edit.</h2><span>Same excerpt · 15 seconds</span></div>
+          <div class="comparison-pair comparison-pair--portrait">
+            <figure class="comparison-tile"><figcaption><strong>Original</strong><span>Success Clues Podcast</span></figcaption><video muted loop playsinline preload="metadata" controls poster="media/podcast-source-poster.jpg" aria-label="Original excerpt from Success Clues Podcast"><source src="media/podcast-source-excerpt.mp4" type="video/mp4"></video><p class="comparison-side-note">Widescreen footage, without added captions or graphics.</p></figure>
+            <figure class="comparison-tile"><figcaption><strong>HookHaus edit</strong><span>Portrait · captions</span></figcaption><video muted loop playsinline preload="metadata" controls poster="media/podcast-edit-poster.jpg" aria-label="HookHaus portrait edit with captions"><source src="media/podcast-hookhaus-edit.mp4" type="video/mp4"></video></figure>
+          </div>
+          <p class="comparison-note">The same interview moment, reframed for vertical viewing and captioned. Original by <a href="https://www.youtube.com/watch?v=lmOoWqcH9gA">Success Clues Podcast</a> · <a href="https://www.youtube.com/t/creative_commons">Creative Commons Attribution</a>. <a href="#source-lmOoWqcH9gA">Full credit</a>.</p>
+        </section>
+        <section class="comparison" aria-labelledby="compare-room-title">
+          <div class="comparison-heading"><h2 id="compare-room-title">Room with a view</h2><span>Independent editing study · Property</span></div>
+          <div class="comparison-pair">
+            <figure class="comparison-tile"><figcaption><strong>Original</strong><span>Unedited footage · Mixkit</span></figcaption><video muted loop playsinline preload="metadata" poster="media/room-source-poster.jpg" aria-label="Original unedited property footage"><source src="media/room-source-excerpt.mp4" type="video/mp4"></video></figure>
+            <figure class="comparison-tile"><figcaption><strong>HookHaus edit</strong><span>Sequencing · reframing · titles</span></figcaption><video muted loop playsinline preload="metadata" poster="media/room-with-a-view.jpg?v=20261015-edit-2" aria-label="Finished Room with a view edit"><source src="media/room-with-a-view.mp4?v=20261015-edit-2" type="video/mp4"></video></figure>
+          </div>
+          <p class="comparison-note">The original is a short unedited excerpt from the same source. The finished edit selects and reframes moments from that footage. <a href="#room-with-a-view">Full credits</a>.</p>
+        </section>
+        <section class="comparison" aria-labelledby="compare-city-title">
+          <div class="comparison-heading"><h2 id="compare-city-title">After dark</h2><span>Independent editing study · City</span></div>
+          <div class="comparison-pair">
+            <figure class="comparison-tile"><figcaption><strong>Original</strong><span>Unedited footage · Mixkit</span></figcaption><video muted loop playsinline preload="metadata" poster="media/city-source-poster.jpg" aria-label="Original unedited city footage"><source src="media/city-source-excerpt.mp4" type="video/mp4"></video></figure>
+            <figure class="comparison-tile"><figcaption><strong>HookHaus edit</strong><span>Shot selection · pacing · titles</span></figcaption><video muted loop playsinline preload="metadata" poster="media/after-dark.jpg?v=20261015-edit-2" aria-label="Finished After dark edit"><source src="media/after-dark.mp4?v=20261015-edit-2" type="video/mp4"></video></figure>
+          </div>
+          <p class="comparison-note">One original aerial, selected and arranged into a short city edit. <a href="#after-dark">Full credits</a>.</p>
+        </section>
+      </div>
       <nav class="credits-nav" aria-label="Credit sections"><a href="#founder-clips">Founder clips</a><a href="#customer-discovery-clips">Product &amp; customer discovery</a><a href="#founder-creator-methods">Founder &amp; creator methods</a><a href="#business-buffer-clips">More business clips</a><a href="#editing-studies">Editing studies &amp; music</a></nav>
 
       <section class="credits-group" id="founder-clips" aria-labelledby="founder-clips-title">
@@ -465,18 +494,22 @@
   </div>
 <script>
     const motion = matchMedia('(prefers-reduced-motion: reduce)');
-    const videos = [...document.querySelectorAll('.preview-tile video')];
+    const videos = [...document.querySelectorAll('.comparison-tile video')];
     const toggle = document.querySelector('.motion-toggle');
     let playing = !motion.matches;
-    let visible = true;
+    const visible = new Set();
     function updatePreviews() {
       toggle.textContent = playing ? 'Pause previews' : 'Play previews';
-      videos.forEach(video => { if (playing && visible) video.play().catch(() => {}); else video.pause(); });
+      videos.forEach(video => { if (playing && visible.has(video.closest('.comparison'))) video.play().catch(() => {}); else video.pause(); });
     }
     toggle.hidden = false;
     toggle.addEventListener('click', () => { playing = !playing; updatePreviews(); });
     motion.addEventListener('change', () => { playing = !motion.matches; updatePreviews(); });
-    if ('IntersectionObserver' in window) new IntersectionObserver(entries => { visible = entries[0].isIntersecting; updatePreviews(); }).observe(document.querySelector('.preview-strip'));
+    const sections = [...document.querySelectorAll('.comparison')];
+    if ('IntersectionObserver' in window) {
+      const observer = new IntersectionObserver(entries => { entries.forEach(entry => { if (entry.isIntersecting) visible.add(entry.target); else visible.delete(entry.target); }); updatePreviews(); });
+      sections.forEach(section => observer.observe(section));
+    } else sections.forEach(section => visible.add(section));
     updatePreviews();
   </script>
 </body>
