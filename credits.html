@@ -36,44 +36,43 @@
     @media(max-width:620px){.credits-main{font-size:1.0625rem}.credit-facts>div{grid-template-columns:1fr;gap:.15rem;margin:1rem 0}.credit-facts dt{font-size:.875rem}.credits-group{margin-top:2rem}.credits-nav{margin-bottom:2rem}.credit-item{padding:1.5rem 0}.credit-item:target{scroll-margin-top:1rem}}
     @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
 
-    /* Visual source library: every attribution stays visible without interaction. */
-    .credits-main{max-width:1380px;padding-top:clamp(2rem,4vw,3.5rem)}
-    body .credits-main h1{font-size:clamp(2.7rem,6vw,5.5rem);max-width:13ch;line-height:.98;margin:.6rem 0 1rem}
-    .credits-intro{font-size:1.05rem;max-width:56ch}
-    .comparisons{margin:1.5rem 0 1rem}
-    .comparison{padding:1.25rem 0 1.7rem;border-top:1px solid var(--line)}
-    .comparison-heading{display:flex;align-items:baseline;justify-content:space-between;gap:1rem;margin:0 0 .8rem}
-    body .credits-main .comparison h2{font:700 clamp(1.15rem,2.2vw,1.55rem)/1.2 var(--sans);letter-spacing:-.02em;text-transform:none;margin:0}
-    .comparison-heading span{font-size:.78rem;color:var(--muted)}
-    .comparison-pair{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:clamp(.5rem,1.2vw,1rem);max-width:1040px}
+    /* Comparison first; the source directory remains readable below. */
+    .credits-main{max-width:1220px;padding-top:clamp(1.5rem,3vw,2.5rem)}
+    body .credits-main h1{font-size:clamp(2.2rem,4vw,3.55rem);line-height:1.05;max-width:none;margin:.45rem 0 .8rem}
+    .credits-intro{font-size:1rem;max-width:60ch}
+    .motion-toggle{font:inherit;font-size:.8rem;color:var(--ink);background:transparent;border:1px solid #777;border-radius:4px;padding:.35rem .65rem;margin:1rem 0 0;cursor:pointer}
+    .motion-toggle:focus-visible,.credits-main a:focus-visible{outline:2px solid var(--accent);outline-offset:4px}
+    .comparisons{margin:1.5rem 0 2rem}
+    .comparison{border-top:1px solid var(--line);padding-top:1.15rem}
+    .comparison-heading{display:flex;justify-content:space-between;align-items:baseline;gap:1rem;margin:0 0 1.1rem}
+    body .credits-main .comparison h2{font:700 clamp(1.2rem,2.4vw,1.6rem)/1.2 var(--sans);letter-spacing:-.02em;text-transform:none;margin:0}
+    .comparison-heading span{font-size:.8rem;color:var(--muted)}
+    .comparison-pair{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,.66fr);gap:clamp(.75rem,2vw,1.5rem);max-width:720px;align-items:start}
     .comparison-tile{min-width:0;margin:0}
-    .comparison-tile video{display:block;width:100%;height:auto;aspect-ratio:16/9;object-fit:cover;background:#262629;border-radius:6px}
-    .comparison-pair--portrait{grid-template-columns:minmax(0,1fr) minmax(0,.316fr)}
-    .comparison-pair--portrait .comparison-tile:last-child video{aspect-ratio:9/16}
-    .comparison-tile figcaption{display:flex;align-items:baseline;gap:.6rem;flex-wrap:wrap;padding:0 0 .55rem;color:var(--ink);font-size:.9rem;line-height:1.3}
-    .comparison-tile figcaption strong{font-size:.75rem;text-transform:uppercase;letter-spacing:.06em}
-    .comparison-tile figcaption span{color:var(--muted);font-size:.8rem}
-    .comparison-tile:last-child figcaption strong{color:var(--accent)}
-    .comparison-side-note{margin:.55rem 0 0;color:var(--muted);font-size:.8rem;line-height:1.4}
-    .comparison-note{margin:.3rem 0 0;color:var(--muted);font-size:.85rem;max-width:75ch}
-    .motion-toggle{font:inherit;font-size:.8rem;color:var(--ink);background:transparent;border:1px solid #777;border-radius:4px;padding:.35rem .65rem;margin:1.25rem 0 0;cursor:pointer}
-    .motion-toggle:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
-    .credits-nav{border-top:1px solid var(--line);border-bottom:1px solid var(--line);padding:.8rem 0;margin:1.5rem 0 3.5rem}
-    .credits-group{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));align-items:start;gap:1rem;margin-top:4rem}
-    body .credits-main .credits-group>h2{grid-column:1/-1;color:var(--ink);font-size:clamp(1.6rem,3vw,2.5rem);line-height:1.1;margin:0}
-    .group-note{grid-column:1/-1;margin:0 0 .6rem}
-    .credit-item{min-width:0;background:#1b1c1e;border:1px solid #37383a;border-radius:10px;padding:1.25rem;overflow:hidden;scroll-margin-top:1rem}
-    .credit-item:target{border:2px solid var(--accent);padding:calc(1.25rem - 1px)}
-    .source-image{display:block;width:100%;height:auto;aspect-ratio:16/9;object-fit:cover;background:#2a2b2d;border-radius:5px}
-    .credit-item .source-preview{margin:-1.25rem -1.25rem 1rem}.source-preview figcaption{font-size:.72rem;color:#b3b4b2;margin-top:.4rem;padding:0 1.25rem}.source-preview .source-image{border-radius:0}
-    .credit-type{font-size:.72rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--accent);margin:0 0 .45rem}
-    body .credits-main .credit-item h3{font-size:clamp(1.18rem,2vw,1.5rem);line-height:1.2;margin:0 0 1rem}
-    .credit-facts>div{grid-template-columns:6.2rem minmax(0,1fr);gap:.35rem .7rem;margin:.65rem 0;font-size:.88rem;line-height:1.5}
-    .credit-facts dt{color:#b3b4b2}
+    .comparison-tile figcaption{display:flex;align-items:baseline;gap:.65rem;flex-wrap:wrap;padding:0 0 .6rem;color:var(--ink);font-size:.85rem;line-height:1.3}
+    .comparison-tile figcaption strong{font-size:.75rem;text-transform:uppercase;letter-spacing:.07em}
+    .comparison-tile figcaption span{color:var(--muted)}
+    .result-tile figcaption strong{color:var(--accent)}
+    .comparison-tile video{display:block;width:100%;height:auto;aspect-ratio:16/9;object-fit:contain;background:#191a1c;border-radius:6px}
+    .result-tile video{aspect-ratio:9/16}
+    .comparison-side-note{font-size:.9rem;line-height:1.5;color:var(--muted);margin:.8rem 0 0;max-width:38ch}
+    .edit-details{display:flex;flex-wrap:wrap;gap:.4rem;margin:1rem 0 0;padding:0;list-style:none}
+    .edit-details li{font-size:.75rem;line-height:1.3;color:var(--ink);border:1px solid #45464a;border-radius:999px;padding:.4rem .65rem}
+    .comparison-note{font-size:.85rem;line-height:1.5;color:var(--muted);max-width:75ch;margin:1.1rem 0 0}
+    .credits-nav{display:flex;flex-wrap:wrap;gap:.3rem 1.5rem;border-top:1px solid var(--line);border-bottom:1px solid var(--line);padding:.8rem 0;margin:2.5rem 0 3rem}
+    .credits-group{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));align-items:start;gap:0 2rem;margin-top:3.5rem}
+    body .credits-main .credits-group>h2{grid-column:1/-1;color:var(--ink);font:700 clamp(1.4rem,2.5vw,2rem)/1.2 var(--sans);letter-spacing:-.02em;text-transform:none;margin:0 0 .4rem}
+    .group-note{grid-column:1/-1;color:var(--muted);margin:0 0 1rem}
+    .credit-item{min-width:0;border:0;border-top:1px solid var(--line);border-radius:0;background:transparent;padding:1.25rem 0;scroll-margin-top:1rem}
+    .credit-item:target{border-top:3px solid var(--accent);padding:calc(1.25rem - 2px) 0 1.25rem}
+    .source-preview{display:none}
+    .credit-type{font-size:.72rem;color:var(--muted);margin:0 0 .35rem}
+    body .credits-main .credit-item h3{font:700 clamp(1.15rem,2vw,1.4rem)/1.25 var(--sans);letter-spacing:-.02em;text-transform:none;margin:0 0 .9rem}
+    .credit-facts>div{display:grid;grid-template-columns:6.8rem minmax(0,1fr);gap:.35rem .7rem;margin:.6rem 0;font-size:.88rem;line-height:1.5}
+    .credit-facts dt{color:var(--muted)}
     .credit-facts dd{overflow-wrap:anywhere}
     .study-credit{line-height:1.55}
-    .credits-main a:focus-visible{outline:2px solid var(--accent);outline-offset:4px}
-    @media(max-width:700px){.credits-main{padding-left:1rem;padding-right:1rem}.credits-group{grid-template-columns:1fr;margin-top:3rem}.comparison-heading{display:block}.comparison-heading span{display:block;margin-top:.25rem}.comparison-pair{gap:.5rem}.comparison-pair--portrait{grid-template-columns:minmax(0,1fr) minmax(0,.72fr)}.comparison-tile figcaption{display:block;min-height:3rem}.comparison-tile figcaption span{display:block;margin-top:.25rem}.credit-facts>div{grid-template-columns:5.5rem minmax(0,1fr);gap:.5rem;margin:.7rem 0}.credit-facts dt{font-size:.8rem}.credit-item{padding:1rem}.credit-item .source-preview{margin:-1rem -1rem 1rem}.source-preview figcaption{padding:0 1rem}.credit-item:target{padding:calc(1rem - 1px)}}
+    @media(max-width:700px){.credits-main{padding-left:1rem;padding-right:1rem}.comparison-heading{display:block}.comparison-heading span{display:block;margin-top:.3rem}.comparison-pair{grid-template-columns:minmax(0,.65fr) minmax(0,1.35fr);gap:.65rem}.comparison-tile figcaption{display:block;min-height:3.3rem}.comparison-tile figcaption span{display:block;margin-top:.2rem;font-size:.75rem}.edit-details{display:block}.edit-details li{display:table;margin:.4rem 0;font-size:.7rem}.credits-group{grid-template-columns:1fr;margin-top:2.5rem}.credit-facts>div{grid-template-columns:5.5rem minmax(0,1fr);gap:.4rem}.credit-item{padding:1rem 0}.credit-item:target{padding:calc(1rem - 2px) 0 1rem}}
 
   </style>
   <link rel="icon" type="image/svg+xml" href="favicon.svg">
@@ -88,33 +87,25 @@
     <header class="site-header"><a class="brand" href="index.html#top" aria-label="HookHaus, back to top"><svg class="brand-logo" role="img" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 1000"><circle cx="500" cy="500" r="500" fill="#C6FF3D"/><g transform="rotate(-6 500 500)"><rect x="245" y="265" width="105" height="470" fill="#111113"/><rect x="650" y="265" width="105" height="470" fill="#111113"/><path d="M350 470 H548 Q612 470 612 534 V560 Q612 628 548 628 Q484 628 484 568" fill="none" stroke="#FF5A1F" stroke-width="88"/></g></svg><span class="brand-text"><strong>HookHaus<i>.</i></strong><small>CLIPS PEOPLE FINISH</small></span></a><nav class="site-nav" aria-label="Page navigation"><a href="index.html#work">Work</a><a href="index.html#contact">Contact</a></nav></header>
     <main class="credits-main" id="credits">
       <p class="eyebrow">HookHaus / Credits</p>
-      <h1>Behind the clips<span class="period">.</span></h1>
-      <p class="credits-intro">See the footage we started with alongside the finished edit. Then explore the people, original videos and music behind our work.</p>
+      <h1>From conversation to clip<span class="period">.</span></h1>
+      <p class="credits-intro">An 11-second moment from a 34-minute conversation, reframed and captioned for short-form. See the original and the edit side by side.</p>
       <button class="motion-toggle" type="button" hidden>Pause previews</button>
-      <div class="comparisons" aria-label="Original footage and finished edits">
-        <section class="comparison" aria-labelledby="compare-podcast-title">
-          <div class="comparison-heading"><h2 id="compare-podcast-title">One podcast. A short-form edit.</h2><span>Same excerpt · 15 seconds</span></div>
+      <div class="comparisons" aria-label="Original footage and finished edit">
+        <section class="comparison" aria-labelledby="compare-wef-title">
+          <div class="comparison-heading"><h2 id="compare-wef-title">One idea. Two formats.</h2><span>Ken Griffin on AI-generated work in white-collar jobs · WEF 2026</span></div>
           <div class="comparison-pair comparison-pair--portrait">
-            <figure class="comparison-tile"><figcaption><strong>Original</strong><span>Success Clues Podcast</span></figcaption><video muted loop playsinline preload="metadata" controls poster="media/podcast-source-poster.jpg" aria-label="Original excerpt from Success Clues Podcast"><source src="media/podcast-source-excerpt.mp4" type="video/mp4"></video><p class="comparison-side-note">Widescreen footage, without added captions or graphics.</p></figure>
-            <figure class="comparison-tile"><figcaption><strong>HookHaus edit</strong><span>Portrait · captions</span></figcaption><video muted loop playsinline preload="metadata" controls poster="media/podcast-edit-poster.jpg" aria-label="HookHaus portrait edit with captions"><source src="media/podcast-hookhaus-edit.mp4" type="video/mp4"></video></figure>
+            <figure class="comparison-tile source-tile">
+              <figcaption><strong>Original</strong><span>From the longer conversation</span></figcaption>
+              <video muted loop playsinline preload="metadata" controls poster="media/wef-original-poster.jpg" aria-label="Original World Economic Forum interview excerpt"><source src="media/wef-original-excerpt.mp4" type="video/mp4"></video>
+              <p class="comparison-side-note">An 11-second excerpt from the original 34-minute interview.</p>
+              <ul class="edit-details" aria-label="What the edit changes"><li>Reframed for vertical</li><li>Timed captions</li><li>Opening title</li></ul>
+            </figure>
+            <figure class="comparison-tile result-tile">
+              <figcaption><strong>HookHaus edit</strong><span>Short-form demo</span></figcaption>
+              <video muted loop playsinline preload="metadata" controls poster="media/wef-edit-poster.jpg" aria-label="HookHaus vertical edit of the World Economic Forum interview"><source src="media/wef-hookhaus-demo.mp4" type="video/mp4"></video>
+            </figure>
           </div>
-          <p class="comparison-note">The same interview moment, reframed for vertical viewing and captioned. Original by <a href="https://www.youtube.com/watch?v=lmOoWqcH9gA">Success Clues Podcast</a> · <a href="https://www.youtube.com/t/creative_commons">Creative Commons Attribution</a>. <a href="#source-lmOoWqcH9gA">Full credit</a>.</p>
-        </section>
-        <section class="comparison" aria-labelledby="compare-room-title">
-          <div class="comparison-heading"><h2 id="compare-room-title">Room with a view</h2><span>Independent editing study · Property</span></div>
-          <div class="comparison-pair">
-            <figure class="comparison-tile"><figcaption><strong>Original</strong><span>Unedited footage · Mixkit</span></figcaption><video muted loop playsinline preload="metadata" poster="media/room-source-poster.jpg" aria-label="Original unedited property footage"><source src="media/room-source-excerpt.mp4" type="video/mp4"></video></figure>
-            <figure class="comparison-tile"><figcaption><strong>HookHaus edit</strong><span>Sequencing · reframing · titles</span></figcaption><video muted loop playsinline preload="metadata" poster="media/room-with-a-view.jpg?v=20261015-edit-2" aria-label="Finished Room with a view edit"><source src="media/room-with-a-view.mp4?v=20261015-edit-2" type="video/mp4"></video></figure>
-          </div>
-          <p class="comparison-note">The original is a short unedited excerpt from the same source. The finished edit selects and reframes moments from that footage. <a href="#room-with-a-view">Full credits</a>.</p>
-        </section>
-        <section class="comparison" aria-labelledby="compare-city-title">
-          <div class="comparison-heading"><h2 id="compare-city-title">After dark</h2><span>Independent editing study · City</span></div>
-          <div class="comparison-pair">
-            <figure class="comparison-tile"><figcaption><strong>Original</strong><span>Unedited footage · Mixkit</span></figcaption><video muted loop playsinline preload="metadata" poster="media/city-source-poster.jpg" aria-label="Original unedited city footage"><source src="media/city-source-excerpt.mp4" type="video/mp4"></video></figure>
-            <figure class="comparison-tile"><figcaption><strong>HookHaus edit</strong><span>Shot selection · pacing · titles</span></figcaption><video muted loop playsinline preload="metadata" poster="media/after-dark.jpg?v=20261015-edit-2" aria-label="Finished After dark edit"><source src="media/after-dark.mp4?v=20261015-edit-2" type="video/mp4"></video></figure>
-          </div>
-          <p class="comparison-note">One original aerial, selected and arranged into a short city edit. <a href="#after-dark">Full credits</a>.</p>
+          <p class="comparison-note">Independent editing demo. Original: <a href="https://www.youtube.com/watch?v=USpMQLrRtWw">World Economic Forum</a>, licensed under <a href="https://www.youtube.com/t/creative_commons">Creative Commons Attribution</a>. Edited excerpt, reframed and captioned. No endorsement implied. <a href="#source-USpMQLrRtWw">Full credit</a>.</p>
         </section>
       </div>
       <nav class="credits-nav" aria-label="Credit sections"><a href="#founder-clips">Founder clips</a><a href="#customer-discovery-clips">Product &amp; customer discovery</a><a href="#founder-creator-methods">Founder &amp; creator methods</a><a href="#business-buffer-clips">More business clips</a><a href="#editing-studies">Editing studies &amp; music</a></nav>
