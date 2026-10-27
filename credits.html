@@ -87,27 +87,8 @@
     <header class="site-header"><a class="brand" href="index.html#top" aria-label="HookHaus, back to top"><svg class="brand-logo" role="img" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 1000"><circle cx="500" cy="500" r="500" fill="#C6FF3D"/><g transform="rotate(-6 500 500)"><rect x="245" y="265" width="105" height="470" fill="#111113"/><rect x="650" y="265" width="105" height="470" fill="#111113"/><path d="M350 470 H548 Q612 470 612 534 V560 Q612 628 548 628 Q484 628 484 568" fill="none" stroke="#FF5A1F" stroke-width="88"/></g></svg><span class="brand-text"><strong>HookHaus<i>.</i></strong><small>CLIPS PEOPLE FINISH</small></span></a><nav class="site-nav" aria-label="Page navigation"><a href="index.html#work">Work</a><a href="index.html#contact">Contact</a></nav></header>
     <main class="credits-main" id="credits">
       <p class="eyebrow">HookHaus / Credits</p>
-      <h1>From conversation to clip<span class="period">.</span></h1>
-      <p class="credits-intro">An 11-second moment from a 34-minute conversation, reframed and captioned for short-form. See the original and the edit side by side.</p>
-      <button class="motion-toggle" type="button" hidden>Pause previews</button>
-      <div class="comparisons" aria-label="Original footage and finished edit">
-        <section class="comparison" aria-labelledby="compare-wef-title">
-          <div class="comparison-heading"><h2 id="compare-wef-title">One idea. Two formats.</h2><span>Ken Griffin on AI-generated work in white-collar jobs · WEF 2026</span></div>
-          <div class="comparison-pair comparison-pair--portrait">
-            <figure class="comparison-tile source-tile">
-              <figcaption><strong>Original</strong><span>From the longer conversation</span></figcaption>
-              <video muted loop playsinline preload="metadata" controls poster="media/wef-original-poster.jpg" aria-label="Original World Economic Forum interview excerpt"><source src="media/wef-original-excerpt.mp4" type="video/mp4"></video>
-              <p class="comparison-side-note">An 11-second excerpt from the original 34-minute interview.</p>
-              <ul class="edit-details" aria-label="What the edit changes"><li>Reframed for vertical</li><li>Timed captions</li><li>Opening title</li></ul>
-            </figure>
-            <figure class="comparison-tile result-tile">
-              <figcaption><strong>HookHaus edit</strong><span>Short-form demo</span></figcaption>
-              <video muted loop playsinline preload="metadata" controls poster="media/wef-edit-poster.jpg" aria-label="HookHaus vertical edit of the World Economic Forum interview"><source src="media/wef-hookhaus-demo.mp4" type="video/mp4"></video>
-            </figure>
-          </div>
-          <p class="comparison-note">Independent editing demo. Original: <a href="https://www.youtube.com/watch?v=USpMQLrRtWw">World Economic Forum</a>, licensed under <a href="https://www.youtube.com/t/creative_commons">Creative Commons Attribution</a>. Edited excerpt, reframed and captioned. No endorsement implied. <a href="#source-USpMQLrRtWw">Full credit</a>.</p>
-        </section>
-      </div>
+      <h1>Clip credits<span class="period">.</span></h1>
+      <p class="credits-intro">The people, original videos and music behind our edits.</p>
       <nav class="credits-nav" aria-label="Credit sections"><a href="#founder-clips">Founder clips</a><a href="#customer-discovery-clips">Product &amp; customer discovery</a><a href="#founder-creator-methods">Founder &amp; creator methods</a><a href="#business-buffer-clips">More business clips</a><a href="#editing-studies">Editing studies &amp; music</a></nav>
 
       <section class="credits-group" id="founder-clips" aria-labelledby="founder-clips-title">
@@ -483,25 +464,6 @@
     </main>
     <footer class="site-footer"><span>HOOKHAUS / VIDEO EDITING</span><a href="index.html">Portfolio home</a><span>INDEPENDENT WORK · 2026</span></footer>
   </div>
-<script>
-    const motion = matchMedia('(prefers-reduced-motion: reduce)');
-    const videos = [...document.querySelectorAll('.comparison-tile video')];
-    const toggle = document.querySelector('.motion-toggle');
-    let playing = !motion.matches;
-    const visible = new Set();
-    function updatePreviews() {
-      toggle.textContent = playing ? 'Pause previews' : 'Play previews';
-      videos.forEach(video => { if (playing && visible.has(video.closest('.comparison'))) video.play().catch(() => {}); else video.pause(); });
-    }
-    toggle.hidden = false;
-    toggle.addEventListener('click', () => { playing = !playing; updatePreviews(); });
-    motion.addEventListener('change', () => { playing = !motion.matches; updatePreviews(); });
-    const sections = [...document.querySelectorAll('.comparison')];
-    if ('IntersectionObserver' in window) {
-      const observer = new IntersectionObserver(entries => { entries.forEach(entry => { if (entry.isIntersecting) visible.add(entry.target); else visible.delete(entry.target); }); updatePreviews(); });
-      sections.forEach(section => observer.observe(section));
-    } else sections.forEach(section => visible.add(section));
-    updatePreviews();
-  </script>
+
 </body>
 </html>
