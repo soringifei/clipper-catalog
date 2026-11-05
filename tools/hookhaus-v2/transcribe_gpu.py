@@ -32,7 +32,8 @@ def run(audio, model_name, device, language):
     compute = "float16" if device == "cuda" else "int8"
     model = WhisperModel(model_name, device=device, compute_type=compute, local_files_only=True)
     segments, info = model.transcribe(
-        str(audio), language=language, beam_size=5, word_timestamps=True, vad_filter=False
+        str(audio), language=language, beam_size=5, word_timestamps=True, vad_filter=False,
+        condition_on_previous_text=False,
     )
     words = []
     for seg in segments:

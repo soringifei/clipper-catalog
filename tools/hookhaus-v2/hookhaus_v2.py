@@ -208,6 +208,9 @@ def zoom_schedule(times, sentence_starts, punch=1.15):
     return out
 
 
+FACE_WIDTHS = []
+
+
 def detect_faces(video, every=3):
     """Return (fps, n_frames, w, h, {frame: (cx, cy)}) of the largest face."""
     import cv2
@@ -218,6 +221,7 @@ def detect_faces(video, every=3):
     w = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
     h = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
     samples, f = {}, 0
+    FACE_WIDTHS.clear()
     scale = 480 / w
     while True:
         ok, frame = cap.read()
@@ -230,13 +234,28 @@ def detect_faces(video, every=3):
             if len(faces):
                 x, y, fw, fh = max(faces, key=lambda r: r[2] * r[3])
                 samples[f] = ((x + fw / 2) / scale, (y + fh / 2) / scale)
+                FACE_WIDTHS.append(fw / scale)
         f += 1
     cap.release()
     return fps, f, w, h, samples
 
 
-def reframe(segment, out_path, ass_name, sentence_starts, ffmpeg="ffmpeg"):
-    """Face-tracked 9:16 crop of `segment`, subtitles burned, audio loudness-normalised."""
+def pick_layout(segment, layout="auto"):
+    """'stack' when the faces sit far apart (wide two-shot), else 'single'."""
+    if layout != "auto":
+        return layout
+    _, _, w, _, samples = detect_faces(segment)
+    fx = sorted(c[0] for c in samples.values())
+    spread = (fx[int(len(fx) * 0.9) - 1] - fx[int(len(fx) * 0.1)]) / w * 100 if len(fx) >= 10 else 0.0
+    return "stack" if spread > 40 else "single"
+
+
+def reframe(segment, out_path, ass_name, sentence_starts, ffmpeg="ffmpeg",
+            fontsdir=None, mark_png=None, cover_path=None, cover_t=1.2, layout="auto"):
+    """Face-tracked 9:16 crop of `segment`, subtitles burned, audio loudness-normalised.
+
+    Optional brand extras: `fontsdir` (relative to the output folder), `mark_png` overlaid top-left,
+    `cover_path` = PNG of the clean (no subtitle) frame at `cover_t` seconds."""
     import cv2
 
     fps, n, w, h, samples = detect_faces(segment)
@@ -245,11 +264,33 @@ def reframe(segment, out_path, ass_name, sentence_starts, ffmpeg="ffmpeg"):
     cam_x = virtual_camera(median_filter(xs), deadzone=w * 0.05)
     cam_y = virtual_camera(median_filter(ys), deadzone=h * 0.06, max_step=6.0)
     zooms = zoom_schedule([i / fps for i in range(n)], sentence_starts)
+    fx = sorted(c[0] for c in samples.values())
+    spread = (fx[int(len(fx) * 0.9) - 1] - fx[int(len(fx) * 0.1)]) / w * 100 if len(fx) >= 10 else 0.0
+    stack = layout == "stack" or (layout == "auto" and spread > 40)
+    if stack:  # one tight static panel (9:8) per speaker, found from the face clusters
+        def _med(v, i, d, lo, hi):
+            m = sorted(a[i] for a in v)[len(v) // 2] if len(v) >= 8 else d
+            return max(lo, min(hi, m))  # frontal Haar misses profile faces: keep it inside plausible seats
+        left = [c for c in samples.values() if c[0] < w * 0.40]
+        right = [c for c in samples.values() if c[0] > w * 0.60]
+        s_ch = int(h / 1.45)
+        s_cw = int(s_ch * 1.125)
+        panels = []
+        for grp, dx, dy, xr in ((left, w * 0.15, h * 0.33, (w * 0.08, w * 0.28)),
+                                (right, w * 0.88, h * 0.42, (w * 0.72, w * 0.92))):
+            cx, cy = _med(grp, 0, dx, *xr), _med(grp, 1, dy, h * 0.28, h * 0.50)
+            panels.append((max(0, min(w - s_cw, int(cx - s_cw / 2))), max(0, min(h - s_ch, int(cy - 0.40 * s_ch)))))
 
     out_path = Path(out_path)
+    vf = f"subtitles={ass_name}" + (f":fontsdir={fontsdir}" if fontsdir else "")
+    extra_in = ["-loop", "1", "-i", str(Path(mark_png).resolve())] if mark_png else []
+    if mark_png:
+        maps = ["-filter_complex", f"[0:v]{vf}[s];[s][2:v]overlay=60:210:enable='gte(t,2.8)':format=auto:shortest=1,format=yuv420p[v]",
+                "-map", "[v]", "-map", "1:a"]
+    else:
+        maps = ["-map", "0:v", "-map", "1:a", "-vf", vf]
     cmd = [ffmpeg, "-v", "error", "-y", "-f", "rawvideo", "-pix_fmt", "bgr24", "-s", f"{OUT_W}x{OUT_H}",
-           "-r", f"{fps:.6f}", "-i", "-", "-i", str(Path(segment).resolve()),
-           "-map", "0:v", "-map", "1:a", "-vf", f"subtitles={ass_name}",
+           "-r", f"{fps:.6f}", "-i", "-", "-i", str(Path(segment).resolve()), *extra_in, *maps,
            "-af", "loudnorm=I=-14:TP=-1.5:LRA=11", "-c:v", "libx264", "-preset", "medium", "-crf", "18",
            "-pix_fmt", "yuv420p", "-c:a", "aac", "-b:a", "160k", "-ar", "48000", "-shortest",
            "-movflags", "+faststart", out_path.name]
@@ -260,14 +301,29 @@ def reframe(segment, out_path, ass_name, sentence_starts, ffmpeg="ffmpeg"):
         if not ok:
             break
         # face sits in the upper third of a vertical frame: aim slightly below it
-        x, y, cw, ch = crop_box(cam_x[i], cam_y[i] + h * 0.12 / zooms[i], zooms[i], w, h)
-        crop = frame[y:y + ch, x:x + cw]
-        proc.stdin.write(cv2.resize(crop, (OUT_W, OUT_H), interpolation=cv2.INTER_CUBIC).tobytes())
+        if stack:
+            import numpy as np
+            (lx0, ly0), (rx0, ry0) = panels
+            top = cv2.resize(frame[ly0:ly0 + s_ch, lx0:lx0 + s_cw], (OUT_W, OUT_H // 2), interpolation=cv2.INTER_AREA)
+            bot = cv2.resize(frame[ry0:ry0 + s_ch, rx0:rx0 + s_cw], (OUT_W, OUT_H // 2), interpolation=cv2.INTER_AREA)
+            resized = np.vstack([top, bot])
+            resized[OUT_H // 2 - 3:OUT_H // 2 + 3] = (61, 255, 198)  # lime seam (BGR)
+        else:
+            x, y, cw, ch = crop_box(cam_x[i], cam_y[i] + h * 0.12 / zooms[i], zooms[i], w, h)
+            crop = frame[y:y + ch, x:x + cw]
+            resized = cv2.resize(crop, (OUT_W, OUT_H), interpolation=cv2.INTER_CUBIC)
+        if cover_path and i == int(cover_t * fps):
+            cv2.imwrite(str(cover_path), resized)
+        proc.stdin.write(resized.tobytes())
     cap.release()
     proc.stdin.close()
     if proc.wait() != 0:
         raise RuntimeError(f"ffmpeg reframe failed for {segment}")
-    return {"frames": n, "face_samples": len(samples), "face_hit_rate": round(len(samples) / max(1, -(-n // 3)), 3)}
+    ws = sorted(FACE_WIDTHS)
+    med_w = (ws[len(ws) // 2] / w * 100) if ws else 0.0
+    return {"frames": n, "face_samples": len(samples), "face_hit_rate": round(len(samples) / max(1, -(-n // 3)), 3),
+            "face_x_spread_pct": round(spread, 1), "face_med_width_pct": round(med_w, 1),
+            "layout": "stack" if stack else "single"}
 
 
 # ---------------------------------------------------------------- subtitles

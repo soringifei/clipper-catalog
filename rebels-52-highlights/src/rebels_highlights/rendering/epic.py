@@ -801,7 +801,9 @@ def render_epic(cand: Candidate, info: VideoInfo, trajectory: PlayerTrajectory, 
         ec["t0"] = _visibility_pick(clip.pl, clip.tg, lo, max(lo, hi), path)
 
     tmp_mp4 = out_mp4.with_suffix(".tmp.mp4")
-    wav = Path(tempfile.mkstemp(suffix=".wav", prefix="epic_")[1])
+    _fd, _wp = tempfile.mkstemp(suffix=".wav", prefix="epic_")
+    os.close(_fd)  # Windows: an open handle blocks unlink
+    wav = Path(_wp)
     cmd = [ffmpeg_bin(), "-y", "-hide_banner", "-loglevel", "error",
            "-f", "rawvideo", "-pix_fmt", "bgr24", "-s", f"{OUT_W}x{OUT_H}", "-r", str(int(fps)),
            "-i", "pipe:0", "-i", str(wav),
